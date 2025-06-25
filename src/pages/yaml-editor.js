@@ -406,24 +406,33 @@ const YAMLEditorPage = () => {
 
             if (!currentPackage) continue;
 
-            // Propiedades del paquete
-            if (indent <= 4 && trimmed.includes(':')) {
-              const [key, ...valueParts] = trimmed.split(':');
-              const keyTrimmed = key.trim();
-              let value = valueParts.join(':').trim();
-              value = value.replace(/^["']|["']$/g, '');
+            // Propiedades del paquete (nivel 4 espacios)
+            if (indent === 4 && trimmed.includes(':')) {
+              const colonIndex = trimmed.indexOf(':');
+              const key = trimmed.substring(0, colonIndex).trim();
+              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
 
-              if (keyTrimmed === 'name') {
+              if (key === 'name') {
                 currentPackage.name = value;
-              } else if (keyTrimmed === 'description') {
+              } else if (key === 'description') {
                 currentPackage.description = value;
-              } else if (keyTrimmed === 'file_format') {
-                currentContext = 'package_file_format';
-              } else if (keyTrimmed === 'catalogs') {
-                currentContext = 'package_catalogs';
-              } else if (keyTrimmed === 'package_validation') {
+              } else if (key === 'file_format') {
+                // Esperamos propiedades del file_format
+              } else if (key === 'catalogs') {
+                // Esperamos lista de catálogos
+              } else if (key === 'package_validation') {
                 // Esperamos validaciones de paquete
-              } else if (keyTrimmed === 'type') {
+              }
+              continue;
+            }
+
+            // Propiedades de file_format del paquete (nivel 6 espacios)
+            if (indent === 6 && trimmed.includes(':')) {
+              const colonIndex = trimmed.indexOf(':');
+              const key = trimmed.substring(0, colonIndex).trim();
+              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
+
+              if (key === 'type') {
                 currentPackage.file_format.type = value;
               }
             }
@@ -454,18 +463,17 @@ const YAMLEditorPage = () => {
               }
             }
 
-            // Propiedades de validaciones de paquete
-            else if (currentValidation && currentContext === 'package_validation' && indent > 8 && trimmed.includes(':')) {
-              const [key, ...valueParts] = trimmed.split(':');
-              const keyTrimmed = key.trim();
-              let value = valueParts.join(':').trim();
-              value = value.replace(/^["']|["']$/g, '');
+            // Propiedades de validaciones de paquete (nivel 6 espacios)
+            else if (currentValidation && indent === 6 && trimmed.includes(':')) {
+              const colonIndex = trimmed.indexOf(':');
+              const key = trimmed.substring(0, colonIndex).trim();
+              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
 
-              if (keyTrimmed === 'description') {
+              if (key === 'description') {
                 currentValidation.description = value;
-              } else if (keyTrimmed === 'rule') {
+              } else if (key === 'rule') {
                 currentValidation.rule = value;
-              } else if (keyTrimmed === 'severity') {
+              } else if (key === 'severity') {
                 currentValidation.severity = value;
               }
             }
