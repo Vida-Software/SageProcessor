@@ -176,6 +176,12 @@ const YAMLEditorPage = () => {
           const trimmed = line.trim();
           const indent = line.search(/\S/); // Posición exacta del primer carácter no-espacio
           
+          // Debug para líneas con guión
+          if (trimmed.startsWith('- ')) {
+            console.log(`🔍 LÍNEA CON GUIÓN: "${line}" (línea ${i+1}, indent=${indent})`);
+            console.log(`🔍 Sección actual: ${currentSection}, Catálogo: ${currentCatalog ? currentCatalog.name : 'NINGUNO'}`);
+          }
+          
           if (!trimmed || trimmed.startsWith('#')) continue;
 
           // Detectar secciones principales
