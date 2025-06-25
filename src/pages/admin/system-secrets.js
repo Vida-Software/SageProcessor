@@ -179,7 +179,7 @@ export default function SystemSecretsPage() {
         loadSecrets();
         setEditingSecret(null);
         setShowAddForm(false);
-        setNewSecret({ category: '', key: '', value: '', description: '', masked: false });
+        setNewSecret({ category: '', key: '', value: '', description: '', masked: false, config: {} });
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Error al guardar');
@@ -198,6 +198,29 @@ export default function SystemSecretsPage() {
       newVisible.add(secretKey);
     }
     setVisibleSecrets(newVisible);
+  };
+
+  const handleTestConnection = async (secret) => {
+    try {
+      const response = await fetch('/api/admin/system-secrets/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          key: secret.key, 
+          config: secret.config || {} 
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        alert(`✅ ${result.message}\n\nDetalles: ${JSON.stringify(result.details, null, 2)}`);
+      } else {
+        alert(`❌ ${result.message}\n\nDetalles: ${JSON.stringify(result.details, null, 2)}`);
+      }
+    } catch (error) {
+      alert(`❌ Error al probar conexión: ${error.message}`);
+    }
   };
 
   const groupedSecrets = secrets.reduce((acc, secret) => {
@@ -360,7 +383,7 @@ export default function SystemSecretsPage() {
               variant="light"
               onClick={() => {
                 setShowAddForm(false);
-                setNewSecret({ category: '', key: '', value: '', description: '', masked: false });
+                setNewSecret({ category: '', key: '', value: '', description: '', masked: false, config: {} });
               }}
             >
               Cancelar
@@ -393,16 +416,6 @@ export default function SystemSecretsPage() {
           </div>
           
           <div className="mb-4">
-            <TextInput
-              label="Valor"
-              placeholder="Ingrese el valor del secreto..."
-              type={newSecret.masked ? "password" : "text"}
-              value={newSecret.value}
-              onChange={(e) => setNewSecret({ ...newSecret, value: e.target.value })}
-            />
-          </div>
-          
-          <div className="mb-4">
             <Textarea
               label="Descripción"
               placeholder="Descripción del propósito de este secreto..."
@@ -410,6 +423,9 @@ export default function SystemSecretsPage() {
               onChange={(e) => setNewSecret({ ...newSecret, description: e.target.value })}
             />
           </div>
+
+          {/* Campos de configuración dinámicos */}
+          {newSecret.key && renderConfigFields(newSecret.key, newSecret.config, handleConfigChange)}
           
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -466,26 +482,7 @@ export default function SystemSecretsPage() {
                     </div>
                     <Text className="text-sm text-gray-600 mb-2">{secret.description}</Text>
                     
-                    {secret.masked ? (
-                      <div className="flex items-center">
-                        <code className="bg-gray-200 px-2 py-1 rounded text-sm font-mono">
-                          {visibleSecrets.has(secret.key) ? secret.value : secret.display_value}
-                        </code>
-                        <Button
-                          icon={visibleSecrets.has(secret.key) ? EyeSlashIcon : EyeIcon}
-                          variant="light"
-                          size="xs"
-                          onClick={() => toggleSecretVisibility(secret.key)}
-                          className="ml-2"
-                        >
-                          {visibleSecrets.has(secret.key) ? 'Ocultar' : 'Mostrar'}
-                        </Button>
-                      </div>
-                    ) : (
-                      <code className="bg-gray-200 px-2 py-1 rounded text-sm font-mono">
-                        {secret.display_value || 'Sin valor'}
-                      </code>
-                    )}
+                    {renderSecretDisplay(secret)}
                   </div>
                   
                   <Button
