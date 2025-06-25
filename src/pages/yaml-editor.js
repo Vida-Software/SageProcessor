@@ -140,9 +140,10 @@ const YAMLEditorPage = () => {
       event.target.value = '';
     };
 
-    // Función para parsear contenido YAML siguiendo especificación SAGE
+    // Parser YAML corregido para manejar archivos complejos con 24+ campos
     const parseYamlContent = (yamlContent) => {
       try {
+        console.log('Iniciando parser mejorado...');
         const lines = yamlContent.split('\n');
         const result = {
           sage_yaml: {
@@ -163,56 +164,50 @@ const YAMLEditorPage = () => {
 
         let currentSection = null;
         let currentCatalog = null;
-        let currentPackage = null;
         let currentField = null;
-        let currentValidationRule = null;
-        let currentContext = null; // 'fields', 'file_format', 'validation_rules', etc.
-        let contextStack = [];
-        let validationLevel = null; // 'field', 'row', 'catalog', 'package'
+        let currentValidation = null;
+        let inFieldValidationRules = false;
+        let inRowValidation = false;
+        let inCatalogValidation = false;
 
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
           const trimmed = line.trim();
-          const indent = line.length - line.trimStart().length;
+          const indent = line.search(/\S/); // Posición exacta del primer carácter no-espacio
           
-          // Saltar líneas vacías y comentarios
           if (!trimmed || trimmed.startsWith('#')) continue;
 
           // Detectar secciones principales
-          if (trimmed.startsWith('sage_yaml:')) {
+          if (trimmed === 'sage_yaml:') {
             currentSection = 'sage_yaml';
-            currentContext = null;
-            contextStack = [];
             continue;
-          } else if (trimmed.startsWith('catalogs:')) {
+          } else if (trimmed === 'catalogs:') {
             currentSection = 'catalogs';
-            currentContext = null;
-            contextStack = [];
+            currentCatalog = null;
             continue;
-          } else if (trimmed.startsWith('packages:') || trimmed.startsWith('package:')) {
+          } else if (trimmed === 'packages:' || trimmed === 'package:') {
             currentSection = 'packages';
-            currentContext = null;
-            contextStack = [];
             continue;
           }
 
           // Parsear sage_yaml
-          if (currentSection === 'sage_yaml' && trimmed.includes(':')) {
-            const [key, ...valueParts] = trimmed.split(':');
-            let value = valueParts.join(':').trim();
-            value = value.replace(/^["']|["']$/g, ''); // Remover comillas
+          if (currentSection === 'sage_yaml' && indent > 0 && trimmed.includes(':')) {
+            const colonIndex = trimmed.indexOf(':');
+            const key = trimmed.substring(0, colonIndex).trim();
+            const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
+            
             if (key && value) {
-              result.sage_yaml[key.trim()] = value;
+              result.sage_yaml[key] = value;
             }
           }
 
-          // Parsear catalogs
+          // Parsear catalogs con lógica corregida
           else if (currentSection === 'catalogs') {
-            // Nuevo catálogo (nivel 1)
-            if (indent <= 2 && trimmed.includes(':') && !trimmed.includes(' ')) {
-              const catalogKey = trimmed.replace(':', '').trim();
+            // Nuevo catálogo (nivel 2 espacios)
+            if (indent === 2 && trimmed.endsWith(':') && !trimmed.includes(' ')) {
+              const catalogId = trimmed.slice(0, -1);
               currentCatalog = {
-                name: catalogKey,
+                name: catalogId,
                 description: '',
                 filename: '',
                 file_format: { type: 'CSV', delimiter: ',', header: true },
@@ -221,132 +216,174 @@ const YAMLEditorPage = () => {
                 catalog_validation: []
               };
               result.catalogs.push(currentCatalog);
-              currentContext = null;
               currentField = null;
+              inFieldValidationRules = false;
+              inRowValidation = false;
+              inCatalogValidation = false;
+              console.log(`Nuevo catálogo encontrado: ${catalogId}`);
               continue;
             }
 
             if (!currentCatalog) continue;
 
-            // Propiedades del catálogo
-            if (indent <= 4 && trimmed.includes(':')) {
-              const [key, ...valueParts] = trimmed.split(':');
-              const keyTrimmed = key.trim();
-              let value = valueParts.join(':').trim();
-              value = value.replace(/^["']|["']$/g, '');
+            // Propiedades del catálogo (nivel 4 espacios)
+            if (indent === 4 && trimmed.includes(':')) {
+              const colonIndex = trimmed.indexOf(':');
+              const key = trimmed.substring(0, colonIndex).trim();
+              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
 
-              if (keyTrimmed === 'name') {
+              if (key === 'name') {
                 currentCatalog.name = value;
-              } else if (keyTrimmed === 'description') {
+              } else if (key === 'description') {
                 currentCatalog.description = value;
-              } else if (keyTrimmed === 'filename') {
+              } else if (key === 'filename') {
                 currentCatalog.filename = value;
-              } else if (keyTrimmed === 'file_format') {
-                currentContext = 'file_format';
-              } else if (keyTrimmed === 'fields') {
-                currentContext = 'fields';
-                currentField = null;
-              } else if (keyTrimmed === 'row_validation') {
-                currentContext = 'row_validation';
-                validationLevel = 'row';
-              } else if (keyTrimmed === 'catalog_validation') {
-                currentContext = 'catalog_validation';
-                validationLevel = 'catalog';
-              } else if (keyTrimmed === 'type' && currentContext === 'file_format') {
+              } else if (key === 'file_format') {
+                // Esperamos propiedades anidadas
+              } else if (key === 'fields') {
+                // Esperamos campos
+              } else if (key === 'row_validation') {
+                inRowValidation = true;
+                inCatalogValidation = false;
+                inFieldValidationRules = false;
+              } else if (key === 'catalog_validation') {
+                inCatalogValidation = true;
+                inRowValidation = false;
+                inFieldValidationRules = false;
+              }
+              continue;
+            }
+
+            // Propiedades de file_format (nivel 6 espacios)
+            if (indent === 6 && trimmed.includes(':')) {
+              const colonIndex = trimmed.indexOf(':');
+              const key = trimmed.substring(0, colonIndex).trim();
+              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
+
+              if (key === 'type') {
                 currentCatalog.file_format.type = value;
-              } else if (keyTrimmed === 'delimiter' && currentContext === 'file_format') {
+              } else if (key === 'delimiter') {
                 currentCatalog.file_format.delimiter = value;
-              } else if (keyTrimmed === 'header' && currentContext === 'file_format') {
+              } else if (key === 'header') {
                 currentCatalog.file_format.header = value === 'true';
               }
+              continue;
             }
 
-            // Nuevo campo (con guión)
-            else if (currentContext === 'fields' && trimmed.startsWith('- ')) {
+            // Nuevo campo (nivel 4, con guión)
+            if (indent === 4 && trimmed.startsWith('- ')) {
               const fieldData = trimmed.substring(2).trim();
-              if (fieldData.includes(':')) {
-                const [key, ...valueParts] = fieldData.split(':');
-                let value = valueParts.join(':').trim();
-                value = value.replace(/^["']|["']$/g, '');
-                
-                if (key.trim() === 'name') {
-                  currentField = {
-                    name: value,
-                    type: 'texto',
-                    required: false,
-                    unique: false,
-                    validation_rules: []
-                  };
-                  currentCatalog.fields.push(currentField);
-                }
+              if (fieldData.startsWith('name:')) {
+                const fieldName = fieldData.substring(5).trim().replace(/^["']|["']$/g, '');
+                currentField = {
+                  name: fieldName,
+                  type: 'texto',
+                  required: false,
+                  unique: false,
+                  description: '',
+                  defaultValue: '',
+                  validation_rules: []
+                };
+                currentCatalog.fields.push(currentField);
+                inFieldValidationRules = false;
+                inRowValidation = false;
+                inCatalogValidation = false;
+                console.log(`Nuevo campo encontrado: ${fieldName}`);
               }
+              continue;
             }
 
-            // Propiedades del campo actual
-            else if (currentField && currentContext === 'fields' && indent > 6 && trimmed.includes(':')) {
-              const [key, ...valueParts] = trimmed.split(':');
-              const keyTrimmed = key.trim();
-              let value = valueParts.join(':').trim();
-              value = value.replace(/^["']|["']$/g, '');
+            // Propiedades del campo (nivel 6 espacios)
+            if (currentField && indent === 6 && trimmed.includes(':') && !trimmed.startsWith('- ')) {
+              const colonIndex = trimmed.indexOf(':');
+              const key = trimmed.substring(0, colonIndex).trim();
+              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
 
-              if (keyTrimmed === 'type') {
+              if (key === 'type') {
                 currentField.type = value;
-              } else if (keyTrimmed === 'required') {
+              } else if (key === 'required') {
                 currentField.required = value === 'true';
-              } else if (keyTrimmed === 'unique') {
+              } else if (key === 'unique') {
                 currentField.unique = value === 'true';
-              } else if (keyTrimmed === 'description') {
+              } else if (key === 'description') {
                 currentField.description = value;
-              } else if (keyTrimmed === 'defaultValue') {
+              } else if (key === 'defaultValue') {
                 currentField.defaultValue = value;
-              } else if (keyTrimmed === 'validation_rules') {
-                validationLevel = 'field';
-                currentContext = 'validation_rules';
+              } else if (key === 'validation_rules') {
+                inFieldValidationRules = true;
               }
+              continue;
             }
 
-            // Validaciones de campo, fila o catálogo
-            else if ((currentContext === 'validation_rules' || currentContext === 'row_validation' || currentContext === 'catalog_validation') && trimmed.startsWith('- ')) {
+            // Validaciones de campo (nivel 6, con guión)
+            if (currentField && inFieldValidationRules && indent === 6 && trimmed.startsWith('- ')) {
               const validationData = trimmed.substring(2).trim();
-              if (validationData.includes(':')) {
-                const [key, ...valueParts] = validationData.split(':');
-                let value = valueParts.join(':').trim();
-                value = value.replace(/^["']|["']$/g, '');
-                
-                if (key.trim() === 'name') {
-                  currentValidationRule = {
-                    name: value,
-                    description: '',
-                    rule: '',
-                    severity: 'error'
-                  };
-                  
-                  // Agregar a la lista correspondiente
-                  if (validationLevel === 'field' && currentField) {
-                    currentField.validation_rules.push(currentValidationRule);
-                  } else if (validationLevel === 'row' && currentCatalog) {
-                    currentCatalog.row_validation.push(currentValidationRule);
-                  } else if (validationLevel === 'catalog' && currentCatalog) {
-                    currentCatalog.catalog_validation.push(currentValidationRule);
-                  }
-                }
+              if (validationData.startsWith('name:')) {
+                const validationName = validationData.substring(5).trim().replace(/^["']|["']$/g, '');
+                currentValidation = {
+                  name: validationName,
+                  description: '',
+                  rule: '',
+                  severity: 'error'
+                };
+                currentField.validation_rules.push(currentValidation);
+                console.log(`Nueva validación de campo: ${validationName}`);
               }
+              continue;
             }
 
-            // Propiedades de las reglas de validación
-            else if (currentValidationRule && (currentContext === 'validation_rules' || currentContext === 'row_validation' || currentContext === 'catalog_validation') && indent > 8 && trimmed.includes(':')) {
-              const [key, ...valueParts] = trimmed.split(':');
-              const keyTrimmed = key.trim();
-              let value = valueParts.join(':').trim();
-              value = value.replace(/^["']|["']$/g, '');
+            // Propiedades de validaciones de campo (nivel 8 espacios)
+            if (currentValidation && inFieldValidationRules && indent === 8 && trimmed.includes(':')) {
+              const colonIndex = trimmed.indexOf(':');
+              const key = trimmed.substring(0, colonIndex).trim();
+              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
 
-              if (keyTrimmed === 'description') {
-                currentValidationRule.description = value;
-              } else if (keyTrimmed === 'rule') {
-                currentValidationRule.rule = value;
-              } else if (keyTrimmed === 'severity') {
-                currentValidationRule.severity = value;
+              if (key === 'description') {
+                currentValidation.description = value;
+              } else if (key === 'rule') {
+                currentValidation.rule = value;
+              } else if (key === 'severity') {
+                currentValidation.severity = value.toLowerCase();
               }
+              continue;
+            }
+
+            // Validaciones de catálogo (row_validation y catalog_validation - nivel 4, con guión)
+            if ((inRowValidation || inCatalogValidation) && indent === 4 && trimmed.startsWith('- ')) {
+              const validationData = trimmed.substring(2).trim();
+              if (validationData.startsWith('name:')) {
+                const validationName = validationData.substring(5).trim().replace(/^["']|["']$/g, '');
+                currentValidation = {
+                  name: validationName,
+                  description: '',
+                  rule: '',
+                  severity: 'error'
+                };
+                
+                if (inRowValidation) {
+                  currentCatalog.row_validation.push(currentValidation);
+                } else if (inCatalogValidation) {
+                  currentCatalog.catalog_validation.push(currentValidation);
+                }
+                console.log(`Nueva validación de catálogo: ${validationName}`);
+              }
+              continue;
+            }
+
+            // Propiedades de validaciones de catálogo (nivel 6 espacios)
+            if (currentValidation && (inRowValidation || inCatalogValidation) && indent === 6 && trimmed.includes(':')) {
+              const colonIndex = trimmed.indexOf(':');
+              const key = trimmed.substring(0, colonIndex).trim();
+              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
+
+              if (key === 'description') {
+                currentValidation.description = value;
+              } else if (key === 'rule') {
+                currentValidation.rule = value;
+              } else if (key === 'severity') {
+                currentValidation.severity = value.toLowerCase();
+              }
+              continue;
             }
           }
 
@@ -435,6 +472,13 @@ const YAMLEditorPage = () => {
           }
         }
 
+        console.log('Parser completado. Catálogos encontrados:', result.catalogs.length);
+        if (result.catalogs.length > 0) {
+          console.log('Primer catálogo:', result.catalogs[0].name, 'con', result.catalogs[0].fields.length, 'campos');
+          result.catalogs[0].fields.forEach((field, idx) => {
+            console.log(`Campo ${idx + 1}: ${field.name} (${field.type}), validaciones: ${field.validation_rules.length}`);
+          });
+        }
         return result;
       } catch (error) {
         console.error('Error parsing YAML:', error);
