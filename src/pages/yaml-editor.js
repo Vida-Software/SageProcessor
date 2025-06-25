@@ -143,13 +143,13 @@ const CatalogsYamlSection = ({ catalogs, onAdd, onUpdate, onDelete, dataTypes, f
                 <div className="flex space-x-2 ml-4">
                   <button
                     onClick={() => toggleCatalog(catalogIndex)}
-                    className="p-2 text-blue-600 hover:text-blue-800"
+                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
                   >
-                    {expandedCatalog === catalogIndex ? 'Ocultar' : 'Campos'}
+                    {expandedCatalog === catalogIndex ? 'Ocultar Campos' : 'Ver Campos'}
                   </button>
                   <button
                     onClick={() => onDelete(catalogIndex)}
-                    className="p-2 text-red-600 hover:text-red-800"
+                    className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
                   >
                     Eliminar
                   </button>
@@ -176,17 +176,17 @@ const CatalogsYamlSection = ({ catalogs, onAdd, onUpdate, onDelete, dataTypes, f
                     {catalog.fields?.map((field, fieldIndex) => (
                       <div key={fieldIndex} className="border border-gray-100 rounded p-3 bg-gray-50">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="font-medium text-sm">{field.name}</span>
+                          <span className="font-medium text-sm">{field.name} ({field.type})</span>
                           <div className="flex space-x-2">
                             <button
                               onClick={() => toggleField(catalogIndex, fieldIndex)}
-                              className="text-xs text-blue-600 hover:text-blue-800"
+                              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
                             >
                               {expandedField === `${catalogIndex}-${fieldIndex}` ? 'Ocultar' : 'Editar'}
                             </button>
                             <button
                               onClick={() => deleteField(catalogIndex, fieldIndex)}
-                              className="text-xs text-red-600 hover:text-red-800"
+                              className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
                             >
                               Eliminar
                             </button>
