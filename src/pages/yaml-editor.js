@@ -140,154 +140,153 @@ const YAMLEditorPage = () => {
       event.target.value = '';
     };
 
-    // Parser YAML usando función nativa del navegador
-    const parseYamlContent = (yamlContent) => {
-      try {
-        console.log('Iniciando parser YAML nativo...');
-        
-        // Usar parser YAML sintáctico (js-yaml) 
-        console.log('Usando parser YAML sintáctico (js-yaml)...');
-        
-        // Parsear el YAML usando js-yaml para obtener la estructura real
-        const parsedYaml = yaml.parse(yamlContent);
-        console.log("📋 YAML parseado:", parsedYaml);
-        const result = {
-          sage_yaml: {
-            name: "Configuración SAGE",
-            description: "",
-            version: "1.0.0",
-            author: "SAGE",
-            comments: ""
-          },
-          catalogs: [],
-          package: {
-            name: "Paquete Principal",
-            description: "",
-            catalogs: [],
-            file_format: { type: "ZIP" }
-          }
-        };
+    // Load YAML file handler
+    const handleLoadYaml = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
 
-        // Procesar sage_yaml si existe
-        if (parsedYaml.sage_yaml) {
-          result.sage_yaml = {
-            ...result.sage_yaml,
-            ...parsedYaml.sage_yaml
-          };
-        }
-
-        // Procesar catálogos usando estructura parseada
-        if (parsedYaml.catalogs && Array.isArray(parsedYaml.catalogs)) {
-          console.log(`📂 Procesando ${parsedYaml.catalogs.length} catálogos...`);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const yamlText = e.target.result;
+          console.log('Loading YAML file...');
           
-          parsedYaml.catalogs.forEach((catalog, catalogIndex) => {
-            console.log(`📁 Catálogo ${catalogIndex + 1}:`, catalog.name || catalog.catalog_name || 'Sin nombre');
-            
-            const catalogData = {
-              name: catalog.name || catalog.catalog_name || `Catálogo ${catalogIndex + 1}`,
-              description: catalog.description || "",
-              fields: [],
-              field_validation: [],
-              row_validation: [],
-              catalog_validation: []
-            };
-
-            // Procesar campos (fields)
-            if (catalog.fields && Array.isArray(catalog.fields)) {
-              console.log(`🔍 Procesando ${catalog.fields.length} campos en catálogo: ${catalogData.name}`);
-              
-              catalog.fields.forEach((field, fieldIndex) => {
-                console.log(`📝 Campo ${fieldIndex + 1}:`, field.name || 'Sin nombre');
-                
-                const fieldData = {
-                  name: field.name || `Campo ${fieldIndex + 1}`,
-                  type: field.type || 'texto',
-                  required: field.required !== false, // Por defecto true
-                  description: field.description || "",
-                  validations: []
-                };
-
-                catalogData.fields.push(fieldData);
-              });
-            }
-
-            // Procesar field_validation
-            if (catalog.field_validation) {
-              const validations = Array.isArray(catalog.field_validation) ? catalog.field_validation : [catalog.field_validation];
-              catalogData.field_validation = validations.map(v => ({
-                name: v.name || "Validación sin nombre",
-                description: v.description || "",
-                rule: v.rule || "",
-                severity: v.severity || "error"
-              }));
-            }
-
-            // Procesar row_validation  
-            if (catalog.row_validation) {
-              const validations = Array.isArray(catalog.row_validation) ? catalog.row_validation : [catalog.row_validation];
-              catalogData.row_validation = validations.map(v => ({
-                name: v.name || "Validación sin nombre",
-                description: v.description || "",
-                rule: v.rule || "",
-                severity: v.severity || "error"
-              }));
-            }
-
-            // Procesar catalog_validation
-            if (catalog.catalog_validation) {
-              const validations = Array.isArray(catalog.catalog_validation) ? catalog.catalog_validation : [catalog.catalog_validation];
-              catalogData.catalog_validation = validations.map(v => ({
-                name: v.name || "Validación sin nombre", 
-                description: v.description || "",
-                rule: v.rule || "",
-                severity: v.severity || "error"
-              }));
-            }
-
-            result.catalogs.push(catalogData);
-          });
-        }
-
-        // Procesar package/packages
-        if (parsedYaml.package || parsedYaml.packages) {
-          const packageData = parsedYaml.package || (parsedYaml.packages && parsedYaml.packages[0]);
-          if (packageData) {
-            result.package = {
-              name: packageData.name || "Paquete Principal",
-              description: packageData.description || "",
-              catalogs: packageData.catalogs || [],
-              file_format: packageData.file_format || { type: "ZIP" },
-              package_validation: []
-            };
-
-            // Procesar package_validation
-            if (packageData.package_validation) {
-              const validations = Array.isArray(packageData.package_validation) ? packageData.package_validation : [packageData.package_validation];
-              result.package.package_validation = validations.map(v => ({
-                name: v.name || "Validación sin nombre",
-                description: v.description || "",
-                rule: v.rule || "",
-                severity: v.severity || "error"
-              }));
-            }
+          // Use the proper syntactic parser
+          const result = parseYamlContent(yamlText);
+          if (result) {
+            setSageYamlData(result.sage_yaml || {});
+            setCatalogs(result.catalogs || []);
+            setPackageData(result.package || {});
+            setLoadError('');
+            console.log('YAML loaded successfully:', result.catalogs.length, 'catalogs found');
+          } else {
+            setLoadError('Error parsing YAML file');
           }
+        } catch (error) {
+          console.error('Error loading YAML:', error);
+          setLoadError('Error reading YAML file: ' + error.message);
         }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    };
 
-        console.log("Parser completado. Catálogos encontrados:", result.catalogs.length);
-        if (result.catalogs.length > 0) {
-          console.log("Primer catálogo:", result.catalogs[0].name, "con", result.catalogs[0].fields.length, "campos");
-          if (result.catalogs[0].fields.length > 0) {
-            result.catalogs[0].fields.forEach((field, index) => {
-              console.log(`Campo ${index + 1}: ${field.name} (${field.type}), validaciones: ${field.validations?.length || 0}`);
-            });
-          }
-        }
+    // Main YAML Editor Component
+    const YAMLEditor = () => {
+      return (
+        <div className="space-y-6">
+          {/* Header con controles */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Editor Visual YAML</h3>
+              <p className="text-sm text-gray-600">Crea tu configuración YAML paso a paso</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <div>
+                <input
+                  type="file"
+                  accept=".yaml,.yml"
+                  onChange={handleLoadYaml}
+                  className="hidden"
+                  id="yaml-file-input"
+                />
+                <label
+                  htmlFor="yaml-file-input"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                >
+                  Cargar YAML
+                </label>
+              </div>
+              <button
+                onClick={() => setShowYamlPreview(!showYamlPreview)}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                {showYamlPreview ? 'Ocultar' : 'Ver'} YAML
+              </button>
+              <button
+                onClick={exportYaml}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+              >
+                Exportar YAML
+              </button>
+            </div>
+          </div>
 
-        return result;
-      } catch (error) {
-        console.error('Error al parsear YAML:', error);
-        return null;
-      }
+          {/* Error de carga */}
+          {loadError && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Error al cargar YAML</h3>
+                  <p className="text-sm text-red-700 mt-1">{loadError}</p>
+                </div>
+              </div>
+            </div>
+          )}
+  
+          {/* Navegación de secciones */}
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              {['general', 'catalogs', 'package'].map((section) => (
+                <button
+                  key={section}
+                  onClick={() => setActiveSection(section)}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeSection === section
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {section === 'general' && 'Información General'}
+                  {section === 'catalogs' && `Catálogos (${catalogs.length})`}
+                  {section === 'package' && 'Paquete'}
+                </button>
+              ))}
+            </nav>
+          </div>
+  
+          {/* Vista previa YAML */}
+          {showYamlPreview && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 mb-3">Vista Previa YAML</h4>
+              <pre className="bg-white p-4 rounded border text-sm overflow-x-auto">
+                <code>{generateYamlString(generateYamlOutput())}</code>
+              </pre>
+            </div>
+          )}
+  
+          {/* Contenido de las secciones */}
+          <div className="bg-white rounded-lg border p-6">
+            {activeSection === 'general' && (
+              <GeneralYamlSection 
+                data={sageYamlData}
+                onChange={handleSageYamlChange}
+              />
+            )}
+  
+            {activeSection === 'catalogs' && (
+              <CatalogsYamlSection 
+                catalogs={catalogs}
+                onAdd={addCatalog}
+                onUpdate={updateCatalog}
+                onDelete={deleteCatalog}
+                dataTypes={dataTypes}
+                fileTypes={fileTypes}
+                severityTypes={severityTypes}
+              />
+            )}
+  
+            {activeSection === 'package' && (
+              <PackageYamlSection 
+                packageData={packageData}
+                catalogs={catalogs}
+                onChange={(updatedPackage) => setPackageData(updatedPackage)}
+                fileTypes={fileTypes}
+              />
+            )}
+          </div>
+        </div>
+      );
     };
 
     const handleLoadYaml = (event) => {
@@ -485,10 +484,6 @@ const YAMLEditorPage = () => {
         return result;
       } catch (error) {
         console.error('❌ Error parsing YAML:', error);
-        return null;
-      }
-    };
-        console.error('Error en parseSimpleYAML:', error);
         return null;
       }
     };
