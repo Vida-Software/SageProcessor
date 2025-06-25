@@ -118,38 +118,38 @@ const CatalogsYamlSection = ({ catalogs, onAdd, onUpdate, onDelete, dataTypes, f
       ) : (
         <div className="space-y-4">
           {catalogs.map((catalog, catalogIndex) => (
-            <div key={catalogIndex} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div key={catalogIndex} className="border border-gray-200 rounded-lg p-3 sm:p-4">
+              <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
                     <input
                       type="text"
                       value={catalog.name || ''}
                       onChange={(e) => onUpdate(catalogIndex, { ...catalog, name: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-md"
+                      className="w-full p-2 border border-gray-300 rounded-md text-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                    <input
-                      type="text"
+                    <textarea
                       value={catalog.description || ''}
                       onChange={(e) => onUpdate(catalogIndex, { ...catalog, description: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-md"
+                      className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                      rows="2"
                     />
                   </div>
                 </div>
-                <div className="flex space-x-2 ml-4">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => toggleCatalog(catalogIndex)}
-                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
+                    className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
                   >
-                    {expandedCatalog === catalogIndex ? 'Ocultar Campos' : 'Ver Campos'}
+                    {expandedCatalog === catalogIndex ? 'Ocultar Campos' : `Ver Campos (${catalog.fields?.length || 0})`}
                   </button>
                   <button
                     onClick={() => onDelete(catalogIndex)}
-                    className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
+                    className="flex-1 sm:flex-none px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
                   >
                     Eliminar
                   </button>
@@ -172,70 +172,115 @@ const CatalogsYamlSection = ({ catalogs, onAdd, onUpdate, onDelete, dataTypes, f
                 </div>
                 
                 {expandedCatalog === catalogIndex && (
-                  <div className="mt-4 space-y-3">
+                  <div className="mt-4 space-y-2">
                     {catalog.fields?.map((field, fieldIndex) => (
                       <div key={fieldIndex} className="border border-gray-100 rounded p-3 bg-gray-50">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-medium text-sm">{field.name} ({field.type})</span>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => toggleField(catalogIndex, fieldIndex)}
-                              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
-                            >
-                              {expandedField === `${catalogIndex}-${fieldIndex}` ? 'Ocultar' : 'Editar'}
-                            </button>
-                            <button
-                              onClick={() => deleteField(catalogIndex, fieldIndex)}
-                              className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
-                            >
-                              Eliminar
-                            </button>
+                        <div className="space-y-2">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                            <div className="flex-1">
+                              <span className="font-medium text-sm block">{field.name}</span>
+                              <span className="text-xs text-gray-600">
+                                {field.type} • {field.required ? 'Requerido' : 'Opcional'}
+                                {field.validations && field.validations.length > 0 && 
+                                  ` • ${field.validations.length} validación${field.validations.length !== 1 ? 'es' : ''}`
+                                }
+                              </span>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => toggleField(catalogIndex, fieldIndex)}
+                                className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
+                              >
+                                {expandedField === `${catalogIndex}-${fieldIndex}` ? 'Ocultar' : 'Editar'}
+                              </button>
+                              <button
+                                onClick={() => deleteField(catalogIndex, fieldIndex)}
+                                className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
+                              >
+                                Eliminar
+                              </button>
+                            </div>
                           </div>
                         </div>
                         
                         {expandedField === `${catalogIndex}-${fieldIndex}` && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Nombre</label>
-                              <input
-                                type="text"
-                                value={field.name || ''}
-                                onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, name: e.target.value })}
-                                className="w-full p-2 text-sm border border-gray-300 rounded-md"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Tipo</label>
-                              <select
-                                value={field.type || 'texto'}
-                                onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, type: e.target.value })}
-                                className="w-full p-2 text-sm border border-gray-300 rounded-md"
-                              >
-                                {dataTypes.map(type => (
-                                  <option key={type.value} value={type.value}>{type.label}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Descripción</label>
-                              <input
-                                type="text"
-                                value={field.description || ''}
-                                onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, description: e.target.value })}
-                                className="w-full p-2 text-sm border border-gray-300 rounded-md"
-                              />
-                            </div>
-                            <div className="flex items-center">
-                              <label className="flex items-center text-xs font-medium text-gray-700">
+                          <div className="space-y-4 mt-3">
+                            <div className="grid grid-cols-1 gap-3">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Nombre</label>
                                 <input
-                                  type="checkbox"
-                                  checked={field.required || false}
-                                  onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, required: e.target.checked })}
-                                  className="mr-2"
+                                  type="text"
+                                  value={field.name || ''}
+                                  onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, name: e.target.value })}
+                                  className="w-full p-2 text-sm border border-gray-300 rounded-md"
                                 />
-                                Campo requerido
-                              </label>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">Tipo</label>
+                                  <select
+                                    value={field.type || 'texto'}
+                                    onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, type: e.target.value })}
+                                    className="w-full p-2 text-sm border border-gray-300 rounded-md"
+                                  >
+                                    {dataTypes.map(type => (
+                                      <option key={type.value} value={type.value}>{type.label}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div className="flex items-center">
+                                  <label className="flex items-center text-xs font-medium text-gray-700">
+                                    <input
+                                      type="checkbox"
+                                      checked={field.required || false}
+                                      onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, required: e.target.checked })}
+                                      className="mr-2"
+                                    />
+                                    Campo requerido
+                                  </label>
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Descripción</label>
+                                <textarea
+                                  value={field.description || ''}
+                                  onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, description: e.target.value })}
+                                  className="w-full p-2 text-sm border border-gray-300 rounded-md"
+                                  rows="2"
+                                />
+                              </div>
                             </div>
+                            
+                            {/* Field Validations Section */}
+                            {field.validations && field.validations.length > 0 && (
+                              <div className="border-t pt-3">
+                                <h6 className="text-xs font-medium text-gray-700 mb-2">
+                                  Validaciones ({field.validations.length})
+                                </h6>
+                                <div className="space-y-2">
+                                  {field.validations.map((validation, validationIndex) => (
+                                    <div key={validationIndex} className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                                      <div className="text-xs">
+                                        <div className="font-medium text-gray-700">{validation.name}</div>
+                                        <div className="text-gray-600 mt-1">{validation.description}</div>
+                                        <div className="text-gray-500 mt-1 font-mono text-xs">
+                                          Regla: {validation.rule}
+                                        </div>
+                                        <div className="mt-1">
+                                          <span className={`inline-block px-2 py-1 rounded text-xs ${
+                                            validation.severity === 'error' 
+                                              ? 'bg-red-100 text-red-800' 
+                                              : 'bg-yellow-100 text-yellow-800'
+                                          }`}>
+                                            {validation.severity}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
