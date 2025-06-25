@@ -11,11 +11,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { from, to, organizacion, pais, producto } = req.query;
+    const { dias, fechaInicio, fechaFin, organizacion, pais, producto } = req.query;
+    
+    // Calcular fechas basado en parámetros
+    let startDate, endDate;
+    if (fechaInicio && fechaFin) {
+      startDate = fechaInicio;
+      endDate = fechaFin;
+    } else {
+      const daysBack = parseInt(dias as string) || 30;
+      endDate = new Date().toISOString().split('T')[0];
+      startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    }
+
+    console.log(`Consulta de estadísticas: fechaInicio=${startDate}, fechaFin=${endDate}`);
 
     // Construir la cláusula WHERE base
     let whereClause = "WHERE fecha_ejecucion >= $1 AND fecha_ejecucion <= $2";
-    const params = [from, to];
+    const params = [startDate, endDate];
     let paramCount = 2;
 
     if (organizacion && organizacion !== 'todas') {
@@ -38,30 +51,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Métricas principales
     const statsQuery = `
-      WITH stats AS (
-        SELECT 
-          COUNT(*) as archivos_procesados,
-          ROUND(AVG(CASE WHEN estado = 'Éxito' THEN 100 ELSE 0 END), 2) as tasa_exito,
-          COUNT(CASE WHEN estado = 'Pendiente' THEN 1 END) as archivos_pendientes
-        FROM ejecuciones_yaml
+      SELECT
+        COUNT(*) AS archivos_procesados,
+        COUNT(CASE WHEN estado = 'Éxito' THEN 1 END) AS archivos_exitosos,
+        COUNT(CASE WHEN estado IN ('pendiente', 'en_proceso') THEN 1 END) AS archivos_pendientes,
+        COUNT(CASE WHEN estado = 'Fallido' THEN 1 END) AS archivos_fallidos,
+        (SELECT COUNT(*) FROM casillas WHERE fecha_vencimiento < NOW() + INTERVAL '30 days') as casillas_por_vencer
+      FROM 
+        ejecuciones_yaml
         ${whereClause}
-      )
-      SELECT 
-        s.*,
-        (SELECT COUNT(*) FROM casillas) as casillas_por_vencer
-      FROM stats s
     `;
+    
+    console.log('Consulta de estadísticas: \n', statsQuery);
 
     const client = await pool.connect();
     try {
       const statsResult = await client.query(statsQuery, params);
 
+      const stats = statsResult.rows[0];
+      const archivos_procesados = parseInt(stats?.archivos_procesados) || 0;
+      const archivos_exitosos = parseInt(stats?.archivos_exitosos) || 0;
+      const tasa_exito = archivos_procesados > 0 ? (archivos_exitosos / archivos_procesados * 100).toFixed(1) : 0;
+
       res.json({
         stats: {
-          archivos_procesados: parseInt(statsResult.rows[0]?.archivos_procesados) || 0,
-          tasa_exito: parseFloat(statsResult.rows[0]?.tasa_exito) || 0,
-          archivos_pendientes: parseInt(statsResult.rows[0]?.archivos_pendientes) || 0,
-          casillas_por_vencer: parseInt(statsResult.rows[0]?.casillas_por_vencer) || 0
+          archivos_procesados,
+          tasa_exito: parseFloat(tasa_exito),
+          archivos_pendientes: parseInt(stats?.archivos_pendientes) || 0,
+          casillas_por_vencer: parseInt(stats?.casillas_por_vencer) || 0
         }
       });
     } finally {
