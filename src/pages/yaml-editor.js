@@ -37,7 +37,7 @@ const YAMLEditorPage = () => {
     // Tipos de datos disponibles
     const dataTypes = ['texto', 'decimal', 'entero', 'fecha', 'booleano'];
     const fileTypes = ['CSV', 'EXCEL', 'ZIP'];
-    const severityTypes = ['error', 'warning'];
+    const severityTypes = ['error', 'warning']; // Según YAML_SPEC.md líneas 95, 101, 107
 
     // Funciones para manejar cambios en sage_yaml
     const handleSageYamlChange = (key, value) => {
