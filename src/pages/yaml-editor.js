@@ -145,9 +145,12 @@ const YAMLEditorPage = () => {
       try {
         console.log('Iniciando parser YAML nativo...');
         
-        // Usar el parser manual mejorado directamente
-        console.log('Usando parser manual mejorado...');
-        const lines = yamlContent.split('\n');
+        // Usar parser YAML sintáctico (js-yaml) 
+        console.log('Usando parser YAML sintáctico (js-yaml)...');
+        
+        // Parsear el YAML usando js-yaml para obtener la estructura real
+        const parsedYaml = yaml.parse(yamlContent);
+        console.log("📋 YAML parseado:", parsedYaml);
         const result = {
           sage_yaml: {
             name: "Configuración SAGE",
@@ -165,76 +168,189 @@ const YAMLEditorPage = () => {
           }
         };
 
-        let currentSection = null;
-        let currentCatalog = null;
-        let currentPackage = null;
-        let currentField = null;
-        let currentValidation = null;
-        let inFieldValidationRules = false;
-        let inRowValidation = false;
-        let inCatalogValidation = false;
+        // Procesar sage_yaml si existe
+        if (parsedYaml.sage_yaml) {
+          result.sage_yaml = {
+            ...result.sage_yaml,
+            ...parsedYaml.sage_yaml
+          };
+        }
 
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          const trimmed = line.trim();
-          const indent = line.search(/\S/); // Posición exacta del primer carácter no-espacio
+        // Procesar catálogos usando estructura parseada
+        if (parsedYaml.catalogs && Array.isArray(parsedYaml.catalogs)) {
+          console.log(`📂 Procesando ${parsedYaml.catalogs.length} catálogos...`);
           
-          // Debug para líneas con guión
-          if (trimmed.startsWith('- ')) {
-            console.log(`🔍 LÍNEA CON GUIÓN: "${line}" (línea ${i+1}, indent=${indent})`);
-            console.log(`🔍 Sección actual: ${currentSection}, Catálogo: ${currentCatalog ? currentCatalog.name : 'NINGUNO'}`);
-          }
-          
-          if (!trimmed || trimmed.startsWith('#')) continue;
-
-          // Detectar secciones principales
-          if (trimmed === 'sage_yaml:') {
-            currentSection = 'sage_yaml';
-            continue;
-          } else if (trimmed === 'catalogs:') {
-            currentSection = 'catalogs';
-            currentCatalog = null;
-            continue;
-          } else if (trimmed === 'packages:' || trimmed === 'package:') {
-            currentSection = 'packages';
-            continue;
-          }
-
-          // Parsear sage_yaml
-          if (currentSection === 'sage_yaml' && indent > 0 && trimmed.includes(':')) {
-            const colonIndex = trimmed.indexOf(':');
-            const key = trimmed.substring(0, colonIndex).trim();
-            const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
+          parsedYaml.catalogs.forEach((catalog, catalogIndex) => {
+            console.log(`📁 Catálogo ${catalogIndex + 1}:`, catalog.name || catalog.catalog_name || 'Sin nombre');
             
-            if (key && value) {
-              result.sage_yaml[key] = value;
+            const catalogData = {
+              name: catalog.name || catalog.catalog_name || `Catálogo ${catalogIndex + 1}`,
+              description: catalog.description || "",
+              fields: [],
+              field_validation: [],
+              row_validation: [],
+              catalog_validation: []
+            };
+
+            // Procesar campos (fields)
+            if (catalog.fields && Array.isArray(catalog.fields)) {
+              console.log(`🔍 Procesando ${catalog.fields.length} campos en catálogo: ${catalogData.name}`);
+              
+              catalog.fields.forEach((field, fieldIndex) => {
+                console.log(`📝 Campo ${fieldIndex + 1}:`, field.name || 'Sin nombre');
+                
+                const fieldData = {
+                  name: field.name || `Campo ${fieldIndex + 1}`,
+                  type: field.type || 'texto',
+                  required: field.required !== false, // Por defecto true
+                  description: field.description || "",
+                  validations: []
+                };
+
+                catalogData.fields.push(fieldData);
+              });
+            }
+
+            // Procesar field_validation
+            if (catalog.field_validation) {
+              const validations = Array.isArray(catalog.field_validation) ? catalog.field_validation : [catalog.field_validation];
+              catalogData.field_validation = validations.map(v => ({
+                name: v.name || "Validación sin nombre",
+                description: v.description || "",
+                rule: v.rule || "",
+                severity: v.severity || "error"
+              }));
+            }
+
+            // Procesar row_validation  
+            if (catalog.row_validation) {
+              const validations = Array.isArray(catalog.row_validation) ? catalog.row_validation : [catalog.row_validation];
+              catalogData.row_validation = validations.map(v => ({
+                name: v.name || "Validación sin nombre",
+                description: v.description || "",
+                rule: v.rule || "",
+                severity: v.severity || "error"
+              }));
+            }
+
+            // Procesar catalog_validation
+            if (catalog.catalog_validation) {
+              const validations = Array.isArray(catalog.catalog_validation) ? catalog.catalog_validation : [catalog.catalog_validation];
+              catalogData.catalog_validation = validations.map(v => ({
+                name: v.name || "Validación sin nombre", 
+                description: v.description || "",
+                rule: v.rule || "",
+                severity: v.severity || "error"
+              }));
+            }
+
+            result.catalogs.push(catalogData);
+          });
+        }
+
+        // Procesar package/packages
+        if (parsedYaml.package || parsedYaml.packages) {
+          const packageData = parsedYaml.package || (parsedYaml.packages && parsedYaml.packages[0]);
+          if (packageData) {
+            result.package = {
+              name: packageData.name || "Paquete Principal",
+              description: packageData.description || "",
+              catalogs: packageData.catalogs || [],
+              file_format: packageData.file_format || { type: "ZIP" },
+              package_validation: []
+            };
+
+            // Procesar package_validation
+            if (packageData.package_validation) {
+              const validations = Array.isArray(packageData.package_validation) ? packageData.package_validation : [packageData.package_validation];
+              result.package.package_validation = validations.map(v => ({
+                name: v.name || "Validación sin nombre",
+                description: v.description || "",
+                rule: v.rule || "",
+                severity: v.severity || "error"
+              }));
             }
           }
+        }
 
-          // Parsear catalogs con lógica corregida
-          else if (currentSection === 'catalogs') {
-            // Nuevo catálogo (nivel 2 espacios)
-            if (indent === 2 && trimmed.endsWith(':') && !trimmed.includes(' ')) {
-              const catalogId = trimmed.slice(0, -1);
-              currentCatalog = {
-                name: catalogId,
-                description: '',
-                filename: '',
-                file_format: { type: 'CSV', delimiter: ',', header: true },
-                fields: [],
-                row_validation: [],
-                catalog_validation: []
-              };
-              result.catalogs.push(currentCatalog);
-              currentField = null;
-              inFieldValidationRules = false;
-              inRowValidation = false;
-              inCatalogValidation = false;
-              console.log(`Nuevo catálogo encontrado: ${catalogId}`);
-              continue;
-            }
+        console.log("Parser completado. Catálogos encontrados:", result.catalogs.length);
+        if (result.catalogs.length > 0) {
+          console.log("Primer catálogo:", result.catalogs[0].name, "con", result.catalogs[0].fields.length, "campos");
+          if (result.catalogs[0].fields.length > 0) {
+            result.catalogs[0].fields.forEach((field, index) => {
+              console.log(`Campo ${index + 1}: ${field.name} (${field.type}), validaciones: ${field.validations?.length || 0}`);
+            });
+          }
+        }
 
-            if (!currentCatalog) continue;
+        return result;
+      } catch (error) {
+        console.error('Error al parsear YAML:', error);
+        return null;
+      }
+    };
+
+    const handleLoadYaml = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const yamlContent = e.target.result;
+          const parsedData = parseYamlContent(yamlContent);
+          
+          if (parsedData) {
+            setSageYamlData(parsedData.sage_yaml);
+            setCatalogs(parsedData.catalogs);
+            setPackageData(parsedData.package);
+            console.log("YAML cargado exitosamente:", parsedData);
+          } else {
+            alert('Error al parsear el archivo YAML');
+          }
+        } catch (error) {
+          console.error('Error al cargar archivo:', error);
+          alert('Error al cargar el archivo YAML');
+        }
+      };
+      
+      reader.readAsText(file);
+      event.target.value = '';
+    };
+
+    // Función para generar YAML desde el estado actual
+    const generateYaml = () => {
+      try {
+        const yamlObject = {
+          sage_yaml: sageYamlData,
+          catalogs: catalogs,
+          package: packageData
+        };
+        return yaml.stringify(yamlObject);
+      } catch (error) {
+        console.error('Error al generar YAML:', error);
+        return '';
+      }
+    };
+
+    // Función para descargar el YAML generado
+    const handleDownloadYaml = () => {
+      try {
+        const yamlContent = generateYaml();
+        const blob = new Blob([yamlContent], { type: 'text/yaml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${sageYamlData.name || 'configuracion'}.yaml`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error al descargar YAML:', error);
+        alert('Error al generar el archivo YAML');
+      }
+    };
 
             // Propiedades del catálogo (nivel 4 espacios)
             if (indent === 4 && trimmed.includes(':')) {
