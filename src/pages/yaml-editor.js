@@ -145,16 +145,8 @@ const YAMLEditorPage = () => {
       try {
         console.log('Iniciando parser YAML nativo...');
         
-        // Intentar parsear usando función YAML simple
-        const parsedData = parseSimpleYAML(yamlContent);
-        
-        if (parsedData) {
-          console.log('YAML parseado exitosamente:', parsedData);
-          return convertParsedYamlToConfig(parsedData);
-        }
-        
-        // Fallback al parser manual si falla
-        console.log('Fallback a parser manual...');
+        // Usar el parser manual mejorado directamente
+        console.log('Usando parser manual mejorado...');
         const lines = yamlContent.split('\n');
         const result = {
           sage_yaml: {
@@ -606,14 +598,14 @@ const YAMLEditorPage = () => {
       }
     };
 
-    // Parser YAML simple usando regex y estructuras
+    // Parser YAML especializado para estructura SAGE
     const parseSimpleYAML = (yamlContent) => {
       try {
-        // Convertir YAML a objeto JavaScript usando una técnica simple
         const lines = yamlContent.split('\n');
         const result = {};
-        let currentPath = [];
         let currentObject = result;
+        let arrayStack = []; // Stack para manejar objetos en arrays
+        let currentArrayItem = null;
         
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
@@ -624,70 +616,62 @@ const YAMLEditorPage = () => {
           const indent = line.search(/\S/);
           const level = Math.floor(indent / 2);
           
-          if (trimmed.endsWith(':') && !trimmed.includes(' - ')) {
-            // Es una clave de objeto
+          if (trimmed.startsWith('- ') && trimmed.includes(':')) {
+            // Es el inicio de un nuevo objeto en array
+            const content = trimmed.substring(2).trim();
+            const colonIndex = content.indexOf(':');
+            const key = content.substring(0, colonIndex).trim();
+            const value = content.substring(colonIndex + 1).trim();
+            
+            // Crear nuevo objeto para el array
+            currentArrayItem = {};
+            currentArrayItem[key] = value.replace(/^["']|["']$/g, '');
+            
+            // Encontrar el array padre basado en el contexto
+            const parentPath = findParentPath(result, level);
+            if (parentPath && parentPath.array) {
+              parentPath.array.push(currentArrayItem);
+            }
+            
+          } else if (trimmed.startsWith('- ') && !trimmed.includes(':')) {
+            // Es un valor simple en array
+            const value = trimmed.substring(2).trim().replace(/^["']|["']$/g, '');
+            const parentPath = findParentPath(result, level);
+            if (parentPath && parentPath.array) {
+              parentPath.array.push(value);
+            }
+            
+          } else if (trimmed.endsWith(':')) {
+            // Es una clave de objeto o array
             const key = trimmed.slice(0, -1);
+            const path = buildPath(result, level, key);
             
-            // Ajustar el path según el nivel de indentación
-            currentPath = currentPath.slice(0, level);
-            currentPath.push(key);
+            // Determinar si el próximo nivel es un array
+            const nextLine = i + 1 < lines.length ? lines[i + 1] : '';
+            const nextTrimmed = nextLine.trim();
             
-            // Navegar al objeto correcto
-            currentObject = result;
-            for (let j = 0; j < currentPath.length - 1; j++) {
-              if (!currentObject[currentPath[j]]) {
-                currentObject[currentPath[j]] = {};
-              }
-              currentObject = currentObject[currentPath[j]];
+            if (nextTrimmed.startsWith('- ')) {
+              // Es un array
+              setNestedValue(result, path, []);
+            } else {
+              // Es un objeto
+              setNestedValue(result, path, {});
             }
             
-            if (!currentObject[key]) {
-              currentObject[key] = {};
-            }
-          } else if (trimmed.startsWith('- ')) {
-            // Es un elemento de array
-            const parentKey = currentPath[currentPath.length - 1];
-            if (parentKey) {
-              // Navegar al objeto padre
-              let parentObject = result;
-              for (let j = 0; j < currentPath.length - 1; j++) {
-                parentObject = parentObject[currentPath[j]];
-              }
-              
-              if (!parentObject[parentKey]) {
-                parentObject[parentKey] = [];
-              }
-              
-              if (Array.isArray(parentObject[parentKey])) {
-                const itemValue = trimmed.substring(2).trim();
-                if (itemValue.includes(':')) {
-                  // Es un objeto dentro del array
-                  const itemObj = {};
-                  const [itemKey, itemVal] = itemValue.split(':').map(s => s.trim());
-                  itemObj[itemKey] = itemVal.replace(/^["']|["']$/g, '');
-                  parentObject[parentKey].push(itemObj);
-                } else {
-                  // Es un valor simple
-                  parentObject[parentKey].push(itemValue.replace(/^["']|["']$/g, ''));
-                }
-              }
-            }
           } else if (trimmed.includes(':')) {
-            // Es una propiedad clave: valor
-            const [key, ...valueParts] = trimmed.split(':');
-            const value = valueParts.join(':').trim().replace(/^["']|["']$/g, '');
+            // Es una propiedad simple
+            const colonIndex = trimmed.indexOf(':');
+            const key = trimmed.substring(0, colonIndex).trim();
+            const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
             
-            // Navegar al objeto correcto según el nivel
-            currentPath = currentPath.slice(0, level);
-            currentObject = result;
-            for (let j = 0; j < currentPath.length; j++) {
-              if (!currentObject[currentPath[j]]) {
-                currentObject[currentPath[j]] = {};
-              }
-              currentObject = currentObject[currentPath[j]];
+            // Si estamos dentro de un objeto de array, agregar ahí
+            if (currentArrayItem && level > 0) {
+              currentArrayItem[key] = value;
+            } else {
+              // Agregar al objeto principal
+              const path = buildPath(result, level, key);
+              setNestedValue(result, path, value);
             }
-            
-            currentObject[key.trim()] = value;
           }
         }
         
@@ -696,6 +680,44 @@ const YAMLEditorPage = () => {
         console.error('Error en parseSimpleYAML:', error);
         return null;
       }
+    };
+
+    // Función auxiliar para construir rutas anidadas
+    const buildPath = (obj, level, key) => {
+      // Implementación simplificada - para el caso de SAGE
+      if (level === 0) return [key];
+      if (level === 1) return ['catalogs', key];  // Asumiendo estructura SAGE
+      return [key]; // Fallback
+    };
+
+    // Función auxiliar para establecer valores anidados
+    const setNestedValue = (obj, path, value) => {
+      let current = obj;
+      for (let i = 0; i < path.length - 1; i++) {
+        if (!current[path[i]]) {
+          current[path[i]] = {};
+        }
+        current = current[path[i]];
+      }
+      current[path[path.length - 1]] = value;
+    };
+
+    // Función auxiliar para encontrar el array padre
+    const findParentPath = (obj, level) => {
+      // Implementación simplificada para estructura SAGE
+      if (level === 1) return { array: obj.catalogs };
+      if (level === 2) {
+        // Buscar en catálogos
+        if (obj.catalogs) {
+          for (const catalogKey in obj.catalogs) {
+            const catalog = obj.catalogs[catalogKey];
+            if (catalog.fields && Array.isArray(catalog.fields)) {
+              return { array: catalog.fields };
+            }
+          }
+        }
+      }
+      return null;
     };
 
     // Convertir datos parseados a configuración del editor
@@ -743,6 +765,20 @@ const YAMLEditorPage = () => {
               }));
             }
 
+            // Asegurar que las validaciones sean arrays
+            if (catalogData.row_validation && !Array.isArray(catalogData.row_validation)) {
+              catalog.row_validation = [catalogData.row_validation];
+            }
+            if (catalogData.catalog_validation && !Array.isArray(catalogData.catalog_validation)) {
+              catalog.catalog_validation = [catalogData.catalog_validation];
+            }
+
+            // Asegurar que package_validation también sea array si existe
+            if (catalogData.package_validation && !Array.isArray(catalogData.package_validation)) {
+              // Esta validación pertenece al paquete, no al catálogo
+              // La moveremos al procesar el paquete
+            }
+
             config.catalogs.push(catalog);
           });
         }
@@ -761,6 +797,11 @@ const YAMLEditorPage = () => {
                 catalogs: packageInfo.catalogs || [],
                 package_validation: packageInfo.package_validation || []
               };
+
+              // Asegurar que package_validation sea array
+              if (packageInfo.package_validation && !Array.isArray(packageInfo.package_validation)) {
+                config.package.package_validation = [packageInfo.package_validation];
+              }
             }
           }
         }
@@ -1596,13 +1637,13 @@ const YamlCatalogEditor = ({ catalog, index, onUpdate, onDelete, dataTypes, file
               </Button>
             </div>
             
-            {(!catalog.catalog_validation || catalog.catalog_validation.length === 0) ? (
+            {(!catalog.catalog_validation || (Array.isArray(catalog.catalog_validation) && catalog.catalog_validation.length === 0)) ? (
               <div className="text-center py-4 text-gray-500">
                 No hay validaciones de catálogo definidas.
               </div>
             ) : (
               <div className="space-y-3">
-                {catalog.catalog_validation.map((validation, validationIndex) => (
+                {(Array.isArray(catalog.catalog_validation) ? catalog.catalog_validation : [catalog.catalog_validation]).map((validation, validationIndex) => (
                   <div key={validationIndex} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-md">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
