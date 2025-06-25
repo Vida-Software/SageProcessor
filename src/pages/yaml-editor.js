@@ -140,7 +140,7 @@ const YAMLEditorPage = () => {
       event.target.value = '';
     };
 
-    // Parser YAML corregido para manejar archivos complejos con 24+ campos
+    // Parser YAML mejorado - menos estricto con indentación
     const parseYamlContent = (yamlContent) => {
       try {
         console.log('Iniciando parser mejorado...');
@@ -277,8 +277,8 @@ const YAMLEditorPage = () => {
               continue;
             }
 
-            // Nuevo campo (nivel 4, con guión seguido de name:)
-            if (indent === 4 && trimmed.startsWith('- ')) {
+            // Nuevo campo (cualquier nivel con guión dentro de fields)
+            if (currentCatalog && trimmed.startsWith('- ') && currentSection === 'catalogs') {
               console.log(`🔍 DEBUGGING: Línea nivel 4 con guión: "${line}"`);
               console.log(`🔍 Catálogo actual: ${currentCatalog ? currentCatalog.name : 'NINGUNO'}`);
               
@@ -333,8 +333,8 @@ const YAMLEditorPage = () => {
               continue;
             }
 
-            // Propiedades del campo (nivel 6 espacios)
-            if (currentField && indent === 6 && trimmed.includes(':') && !trimmed.startsWith('- ')) {
+            // Propiedades del campo (cualquier nivel mayor que el campo)
+            if (currentField && indent > 4 && trimmed.includes(':') && !trimmed.startsWith('- ')) {
               const colonIndex = trimmed.indexOf(':');
               const key = trimmed.substring(0, colonIndex).trim();
               const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
