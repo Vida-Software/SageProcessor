@@ -165,8 +165,10 @@ const YAMLEditorPage = () => {
         let currentCatalog = null;
         let currentPackage = null;
         let currentField = null;
+        let currentValidationRule = null;
         let currentContext = null; // 'fields', 'file_format', 'validation_rules', etc.
         let contextStack = [];
+        let validationLevel = null; // 'field', 'row', 'catalog', 'package'
 
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
@@ -214,7 +216,9 @@ const YAMLEditorPage = () => {
                 description: '',
                 filename: '',
                 file_format: { type: 'CSV', delimiter: ',', header: true },
-                fields: []
+                fields: [],
+                row_validation: [],
+                catalog_validation: []
               };
               result.catalogs.push(currentCatalog);
               currentContext = null;
@@ -242,6 +246,12 @@ const YAMLEditorPage = () => {
               } else if (keyTrimmed === 'fields') {
                 currentContext = 'fields';
                 currentField = null;
+              } else if (keyTrimmed === 'row_validation') {
+                currentContext = 'row_validation';
+                validationLevel = 'row';
+              } else if (keyTrimmed === 'catalog_validation') {
+                currentContext = 'catalog_validation';
+                validationLevel = 'catalog';
               } else if (keyTrimmed === 'type' && currentContext === 'file_format') {
                 currentCatalog.file_format.type = value;
               } else if (keyTrimmed === 'delimiter' && currentContext === 'file_format') {
@@ -264,7 +274,8 @@ const YAMLEditorPage = () => {
                     name: value,
                     type: 'texto',
                     required: false,
-                    unique: false
+                    unique: false,
+                    validation_rules: []
                   };
                   currentCatalog.fields.push(currentField);
                 }
@@ -288,6 +299,53 @@ const YAMLEditorPage = () => {
                 currentField.description = value;
               } else if (keyTrimmed === 'defaultValue') {
                 currentField.defaultValue = value;
+              } else if (keyTrimmed === 'validation_rules') {
+                validationLevel = 'field';
+                currentContext = 'validation_rules';
+              }
+            }
+
+            // Validaciones de campo, fila o catálogo
+            else if ((currentContext === 'validation_rules' || currentContext === 'row_validation' || currentContext === 'catalog_validation') && trimmed.startsWith('- ')) {
+              const validationData = trimmed.substring(2).trim();
+              if (validationData.includes(':')) {
+                const [key, ...valueParts] = validationData.split(':');
+                let value = valueParts.join(':').trim();
+                value = value.replace(/^["']|["']$/g, '');
+                
+                if (key.trim() === 'name') {
+                  currentValidationRule = {
+                    name: value,
+                    description: '',
+                    rule: '',
+                    severity: 'error'
+                  };
+                  
+                  // Agregar a la lista correspondiente
+                  if (validationLevel === 'field' && currentField) {
+                    currentField.validation_rules.push(currentValidationRule);
+                  } else if (validationLevel === 'row' && currentCatalog) {
+                    currentCatalog.row_validation.push(currentValidationRule);
+                  } else if (validationLevel === 'catalog' && currentCatalog) {
+                    currentCatalog.catalog_validation.push(currentValidationRule);
+                  }
+                }
+              }
+            }
+
+            // Propiedades de las reglas de validación
+            else if (currentValidationRule && (currentContext === 'validation_rules' || currentContext === 'row_validation' || currentContext === 'catalog_validation') && indent > 8 && trimmed.includes(':')) {
+              const [key, ...valueParts] = trimmed.split(':');
+              const keyTrimmed = key.trim();
+              let value = valueParts.join(':').trim();
+              value = value.replace(/^["']|["']$/g, '');
+
+              if (keyTrimmed === 'description') {
+                currentValidationRule.description = value;
+              } else if (keyTrimmed === 'rule') {
+                currentValidationRule.rule = value;
+              } else if (keyTrimmed === 'severity') {
+                currentValidationRule.severity = value;
               }
             }
           }
@@ -301,7 +359,8 @@ const YAMLEditorPage = () => {
                 name: packageKey,
                 description: '',
                 catalogs: [],
-                file_format: { type: 'ZIP' }
+                file_format: { type: 'ZIP' },
+                package_validation: []
               };
               result.package = currentPackage;
               continue;
@@ -324,6 +383,9 @@ const YAMLEditorPage = () => {
                 currentContext = 'package_file_format';
               } else if (keyTrimmed === 'catalogs') {
                 currentContext = 'package_catalogs';
+              } else if (keyTrimmed === 'package_validation') {
+                currentContext = 'package_validation';
+                validationLevel = 'package';
               } else if (keyTrimmed === 'type' && currentContext === 'package_file_format') {
                 currentPackage.file_format.type = value;
               }
@@ -333,6 +395,42 @@ const YAMLEditorPage = () => {
             else if (currentContext === 'package_catalogs' && trimmed.startsWith('- ')) {
               const catalogName = trimmed.substring(2).trim().replace(/^["']|["']$/g, '');
               currentPackage.catalogs.push(catalogName);
+            }
+
+            // Validaciones de paquete
+            else if (currentContext === 'package_validation' && trimmed.startsWith('- ')) {
+              const validationData = trimmed.substring(2).trim();
+              if (validationData.includes(':')) {
+                const [key, ...valueParts] = validationData.split(':');
+                let value = valueParts.join(':').trim();
+                value = value.replace(/^["']|["']$/g, '');
+                
+                if (key.trim() === 'name') {
+                  currentValidationRule = {
+                    name: value,
+                    description: '',
+                    rule: '',
+                    severity: 'error'
+                  };
+                  currentPackage.package_validation.push(currentValidationRule);
+                }
+              }
+            }
+
+            // Propiedades de validaciones de paquete
+            else if (currentValidationRule && currentContext === 'package_validation' && indent > 8 && trimmed.includes(':')) {
+              const [key, ...valueParts] = trimmed.split(':');
+              const keyTrimmed = key.trim();
+              let value = valueParts.join(':').trim();
+              value = value.replace(/^["']|["']$/g, '');
+
+              if (keyTrimmed === 'description') {
+                currentValidationRule.description = value;
+              } else if (keyTrimmed === 'rule') {
+                currentValidationRule.rule = value;
+              } else if (keyTrimmed === 'severity') {
+                currentValidationRule.severity = value;
+              }
             }
           }
         }
