@@ -123,7 +123,7 @@ export const DataBoxList: React.FC<DataBoxListProps> = ({
       transition={{ duration: 0.3 }}
     >
       <Card className="p-4 mb-4">
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <div className="flex flex-col gap-4">
           <div className="flex-1">
             <h3 className="font-medium text-base md:text-lg dark:text-white">{box.instalacion.nombre}</h3>
             <p className="text-sm md:text-base text-gray-700 dark:text-gray-200 font-medium">
@@ -187,7 +187,7 @@ export const DataBoxList: React.FC<DataBoxListProps> = ({
                 </Button>
               )}
             </div>
-            <div className="flex items-center gap-2 ml-auto sm:ml-0">
+            <div className="flex items-center gap-2 justify-between sm:justify-start">
               <button
                 onClick={() => onEditClick(box)}
                 className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-dark-cardHover"
