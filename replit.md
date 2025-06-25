@@ -111,6 +111,16 @@ SAGE (Sistema Avanzado para la Gestión de Configuraciones Organizacionales) is 
 
 ## Changelog
 
+- June 25, 2025: System Secrets Management Added
+  - Created new system secrets center at /admin/system-secrets
+  - Added API endpoint for managing system-wide credentials
+  - Organized secrets by categories: AI APIs, Database, External Services, Security
+  - Includes predefined secret templates for common integrations
+  - Secure handling with masked values and visibility toggles
+  - Added to configuration menu for easy access
+- June 25, 2025: Data Boxes Layout Fixed
+  - Fixed card layout on large screens to use vertical stacking
+  - Improved responsive design consistency across screen sizes
 - June 25, 2025: YAML Editor Removed
   - Removed standalone YAML Editor component at user request
   - Cleaned up navigation menu - removed YAML Editor link and icon imports

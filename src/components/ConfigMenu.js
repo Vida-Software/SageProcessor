@@ -47,6 +47,12 @@ export default function ConfigMenu() {
       description: 'Configurar almacenamiento en la nube para ejecuciones' 
     },
     { 
+      name: 'APIs y Credenciales del Sistema', 
+      href: '/admin/system-secrets', 
+      icon: Cog6ToothIcon,
+      description: 'Gestionar claves de APIs y credenciales generales del sistema' 
+    },
+    { 
       name: 'Gestión Administrativa', 
       href: '/admin/system-config', 
       icon: Cog6ToothIcon,
