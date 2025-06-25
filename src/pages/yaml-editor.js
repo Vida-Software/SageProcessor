@@ -31,6 +31,8 @@ const YAMLEditorPage = () => {
 
     const [activeSection, setActiveSection] = useState('general');
     const [showYamlPreview, setShowYamlPreview] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadError, setLoadError] = useState('');
 
     // Tipos de datos disponibles
     const dataTypes = ['texto', 'decimal', 'entero', 'fecha', 'booleano'];
@@ -101,6 +103,143 @@ const YAMLEditorPage = () => {
       return yamlObj;
     };
 
+    // Función para cargar YAML desde archivo
+    const loadYamlFromFile = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      setIsLoading(true);
+      setLoadError('');
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const yamlContent = e.target.result;
+          const parsedYaml = parseYamlContent(yamlContent);
+          
+          if (parsedYaml) {
+            setYamlConfig(parsedYaml);
+            setLoadError('');
+          } else {
+            setLoadError('No se pudo interpretar el archivo YAML. Verifica que tenga la estructura SAGE correcta.');
+          }
+        } catch (error) {
+          setLoadError('Error al leer el archivo: ' + error.message);
+        }
+        setIsLoading(false);
+      };
+      
+      reader.onerror = () => {
+        setLoadError('Error al leer el archivo');
+        setIsLoading(false);
+      };
+      
+      reader.readAsText(file);
+      
+      // Limpiar el input para permitir cargar el mismo archivo de nuevo
+      event.target.value = '';
+    };
+
+    // Función para parsear contenido YAML
+    const parseYamlContent = (yamlContent) => {
+      try {
+        // Parser básico para YAML sin dependencias externas
+        const lines = yamlContent.split('\n').filter(line => line.trim() && !line.trim().startsWith('#'));
+        const result = {
+          sage_yaml: {
+            name: "Configuración SAGE",
+            description: "",
+            version: "1.0.0",
+            author: "SAGE",
+            comments: ""
+          },
+          catalogs: [],
+          package: {
+            name: "Paquete Principal",
+            description: "",
+            catalogs: [],
+            file_format: { type: "ZIP" }
+          }
+        };
+
+        let currentSection = null;
+        let currentCatalog = null;
+        let currentPackage = null;
+        let indent = 0;
+
+        for (let line of lines) {
+          const trimmed = line.trim();
+          const currentIndent = line.length - line.trimStart().length;
+
+          // Detectar secciones principales
+          if (trimmed.startsWith('sage_yaml:')) {
+            currentSection = 'sage_yaml';
+            continue;
+          } else if (trimmed.startsWith('catalogs:')) {
+            currentSection = 'catalogs';
+            continue;
+          } else if (trimmed.startsWith('packages:') || trimmed.startsWith('package:')) {
+            currentSection = 'package';
+            continue;
+          }
+
+          // Parsear contenido según la sección
+          if (currentSection === 'sage_yaml') {
+            const [key, ...valueParts] = trimmed.split(':');
+            const value = valueParts.join(':').trim().replace(/['"]/g, '');
+            if (key && value) {
+              result.sage_yaml[key.trim()] = value;
+            }
+          } else if (currentSection === 'catalogs') {
+            // Parseo básico de catálogos
+            if (trimmed.includes(':') && currentIndent <= 2) {
+              const catalogName = trimmed.replace(':', '').trim();
+              if (catalogName && !catalogName.includes(' ')) {
+                currentCatalog = {
+                  name: catalogName,
+                  description: '',
+                  filename: '',
+                  file_format: { type: 'CSV', delimiter: ',', header: true },
+                  fields: []
+                };
+                result.catalogs.push(currentCatalog);
+              }
+            } else if (currentCatalog && trimmed.includes(':')) {
+              const [key, ...valueParts] = trimmed.split(':');
+              const value = valueParts.join(':').trim().replace(/['"]/g, '');
+              if (key === 'name' || key === 'description' || key === 'filename') {
+                currentCatalog[key.trim()] = value;
+              }
+            }
+          } else if (currentSection === 'package') {
+            if (trimmed.includes(':') && currentIndent <= 2) {
+              const packageName = trimmed.replace(':', '').trim();
+              if (packageName && !packageName.includes(' ')) {
+                currentPackage = {
+                  name: packageName,
+                  description: '',
+                  catalogs: [],
+                  file_format: { type: 'ZIP' }
+                };
+                result.package = currentPackage;
+              }
+            } else if (currentPackage && trimmed.includes(':')) {
+              const [key, ...valueParts] = trimmed.split(':');
+              const value = valueParts.join(':').trim().replace(/['"]/g, '');
+              if (key === 'name' || key === 'description') {
+                currentPackage[key.trim()] = value;
+              }
+            }
+          }
+        }
+
+        return result;
+      } catch (error) {
+        console.error('Error parsing YAML:', error);
+        return null;
+      }
+    };
+
     // Función para descargar YAML
     const downloadYaml = () => {
       const yamlData = generateYamlOutput();
@@ -159,7 +298,25 @@ const YAMLEditorPage = () => {
             <h3 className="text-lg font-medium text-gray-900">Editor Visual YAML</h3>
             <p className="text-sm text-gray-600">Crea tu configuración YAML paso a paso</p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-3">
+            <div>
+              <input
+                type="file"
+                accept=".yaml,.yml"
+                onChange={loadYamlFromFile}
+                className="hidden"
+                id="yaml-file-input"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={() => document.getElementById('yaml-file-input').click()}
+                variant="secondary"
+                className="text-sm"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Cargando...' : 'Cargar YAML'}
+              </Button>
+            </div>
             <Button
               onClick={() => setShowYamlPreview(!showYamlPreview)}
               variant="secondary"
@@ -176,6 +333,19 @@ const YAMLEditorPage = () => {
             </Button>
           </div>
         </div>
+
+        {/* Error de carga */}
+        {loadError && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <div className="flex">
+              <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error al cargar YAML</h3>
+                <p className="text-sm text-red-700 mt-1">{loadError}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Navegación de secciones */}
         <div className="border-b border-gray-200">
