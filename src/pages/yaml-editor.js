@@ -308,6 +308,19 @@ const YAMLEditorPage = () => {
                 continue;
               }
               
+              // Si estamos en field validation_rules, agregar validación de campo
+              if (inFieldValidationRules && currentField) {
+                const validation = { name: '', description: '', rule: '', severity: 'error' };
+                if (fieldLine.includes('name:')) {
+                  const nameMatch = fieldLine.match(/name:\s*["']?([^"']+)["']?/);
+                  if (nameMatch) validation.name = nameMatch[1];
+                }
+                currentField.validation_rules = currentField.validation_rules || [];
+                currentField.validation_rules.push(validation);
+                console.log(`✅ Validación de campo agregada: ${validation.name} para campo ${currentField.name}`);
+                continue;
+              }
+              
               // Si no estamos en validaciones, es un campo normal
               console.log(`🔍 Contenido después del guión: "${fieldLine}"`);
               
@@ -380,6 +393,8 @@ const YAMLEditorPage = () => {
                 currentField.defaultValue = value;
               } else if (key === 'validation_rules') {
                 inFieldValidationRules = true;
+                inRowValidation = false;
+                inCatalogValidation = false;
                 console.log(`Campo ${currentField.name}: iniciando validation_rules`);
               }
               continue;
@@ -1268,6 +1283,7 @@ const YamlCatalogEditor = ({ catalog, index, onUpdate, onDelete, dataTypes, file
                     onUpdate={updateFieldAt}
                     onRemove={removeField}
                     dataTypes={dataTypes}
+                    severityTypes={severityTypes}
                   />
                 ))}
               </div>
@@ -1498,70 +1514,186 @@ const YamlCatalogEditor = ({ catalog, index, onUpdate, onDelete, dataTypes, file
 };
 
 // Componente editor de campo
-const YamlFieldEditor = ({ field, fieldIndex, onUpdate, onRemove, dataTypes }) => (
-  <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end bg-gray-50 p-3 rounded-md">
-    <div>
-      <label className="block text-xs font-medium text-gray-700 mb-1">
-        Nombre *
-      </label>
-      <input
-        type="text"
-        value={field.name || ''}
-        onChange={(e) => onUpdate(fieldIndex, 'name', e.target.value)}
-        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        placeholder="nombre_campo"
-      />
+const YamlFieldEditor = ({ field, fieldIndex, onUpdate, onRemove, dataTypes, severityTypes }) => {
+  const [expanded, setExpanded] = useState(false);
+  
+  const addValidationRule = () => {
+    const newRule = { name: '', description: '', rule: '', severity: 'error' };
+    const updatedField = {
+      ...field,
+      validation_rules: [...(field.validation_rules || []), newRule]
+    };
+    onUpdate(fieldIndex, 'validation_rules', updatedField.validation_rules);
+  };
+  
+  const updateValidationRule = (ruleIndex, property, value) => {
+    const updatedRules = (field.validation_rules || []).map((rule, i) => 
+      i === ruleIndex ? { ...rule, [property]: value } : rule
+    );
+    onUpdate(fieldIndex, 'validation_rules', updatedRules);
+  };
+  
+  const removeValidationRule = (ruleIndex) => {
+    const updatedRules = (field.validation_rules || []).filter((_, i) => i !== ruleIndex);
+    onUpdate(fieldIndex, 'validation_rules', updatedRules);
+  };
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-3 bg-white">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end mb-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Nombre *
+          </label>
+          <input
+            type="text"
+            value={field.name || ''}
+            onChange={(e) => onUpdate(fieldIndex, 'name', e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="nombre_campo"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Tipo *
+          </label>
+          <select
+            value={field.type || 'texto'}
+            onChange={(e) => onUpdate(fieldIndex, 'type', e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            {dataTypes.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="flex items-center">
+          <label className="flex items-center text-sm">
+            <input
+              type="checkbox"
+              checked={field.required || false}
+              onChange={(e) => onUpdate(fieldIndex, 'required', e.target.checked)}
+              className="mr-2"
+            />
+            Requerido
+          </label>
+        </div>
+        
+        <div className="flex items-center">
+          <label className="flex items-center text-sm">
+            <input
+              type="checkbox"
+              checked={field.unique || false}
+              onChange={(e) => onUpdate(fieldIndex, 'unique', e.target.checked)}
+              className="mr-2"
+            />
+            Único
+          </label>
+        </div>
+        
+        <div className="flex items-center">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-blue-600 hover:text-blue-800 text-sm mr-2"
+          >
+            {expanded ? 'Ocultar' : 'Validaciones'}
+          </button>
+        </div>
+        
+        <div className="flex justify-end">
+          <button
+            onClick={() => onRemove(fieldIndex)}
+            className="text-red-600 hover:text-red-800 text-sm"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+      
+      {expanded && (
+        <div className="border-t border-gray-200 pt-3 mt-3">
+          <div className="flex justify-between items-center mb-3">
+            <h6 className="text-sm font-medium text-gray-700">Validaciones del Campo (Opcional)</h6>
+            <button
+              onClick={addValidationRule}
+              className="text-blue-600 hover:text-blue-800 text-sm"
+            >
+              + Agregar Validación
+            </button>
+          </div>
+          
+          {(!field.validation_rules || field.validation_rules.length === 0) ? (
+            <div className="text-center py-3 text-gray-500 text-sm">
+              No hay validaciones definidas para este campo.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {field.validation_rules.map((rule, ruleIndex) => (
+                <div key={ruleIndex} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-md">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Nombre *</label>
+                    <input
+                      type="text"
+                      value={rule.name || ''}
+                      onChange={(e) => updateValidationRule(ruleIndex, 'name', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                      placeholder="Ej: Rango válido"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Descripción</label>
+                    <input
+                      type="text"
+                      value={rule.description || ''}
+                      onChange={(e) => updateValidationRule(ruleIndex, 'description', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                      placeholder="Ej: El valor debe estar entre 0 y 100"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Regla (pandas) *</label>
+                    <input
+                      type="text"
+                      value={rule.rule || ''}
+                      onChange={(e) => updateValidationRule(ruleIndex, 'rule', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm font-mono"
+                      placeholder={`df['${field.name || 'campo'}'].between(0, 100)`}
+                    />
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <div className="flex-1 mr-2">
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Severidad</label>
+                      <select
+                        value={rule.severity || 'error'}
+                        onChange={(e) => updateValidationRule(ruleIndex, 'severity', e.target.value)}
+                        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                      >
+                        {severityTypes.map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      onClick={() => removeValidationRule(ruleIndex)}
+                      className="text-red-600 hover:text-red-800 text-sm mb-1"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
-    
-    <div>
-      <label className="block text-xs font-medium text-gray-700 mb-1">
-        Tipo *
-      </label>
-      <select
-        value={field.type || 'texto'}
-        onChange={(e) => onUpdate(fieldIndex, 'type', e.target.value)}
-        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-      >
-        {dataTypes.map(type => (
-          <option key={type} value={type}>{type}</option>
-        ))}
-      </select>
-    </div>
-    
-    <div className="flex items-center">
-      <label className="flex items-center text-sm">
-        <input
-          type="checkbox"
-          checked={field.required || false}
-          onChange={(e) => onUpdate(fieldIndex, 'required', e.target.checked)}
-          className="mr-2"
-        />
-        Requerido
-      </label>
-    </div>
-    
-    <div className="flex items-center">
-      <label className="flex items-center text-sm">
-        <input
-          type="checkbox"
-          checked={field.unique || false}
-          onChange={(e) => onUpdate(fieldIndex, 'unique', e.target.checked)}
-          className="mr-2"
-        />
-        Único
-      </label>
-    </div>
-    
-    <div className="md:col-span-2 flex justify-end">
-      <button
-        onClick={() => onRemove(fieldIndex)}
-        className="text-red-600 hover:text-red-800 text-sm"
-      >
-        Eliminar
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 // Componente para la sección de paquete
 const PackageYamlSection = ({ packageData, catalogs, onChange, fileTypes }) => (
