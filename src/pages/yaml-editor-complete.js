@@ -180,8 +180,8 @@ export default function YAMLEditorComplete() {
             }
           }
 
-          // Nuevo campo
-          else if (currentContext === 'fields' && trimmed.startsWith('- ')) {
+          // Nuevo campo (con guión)
+          else if (currentContext === 'fields' && trimmed.startsWith('- ') && indent >= 4) {
             const fieldData = trimmed.substring(2).trim();
             if (fieldData.includes(':')) {
               const [key, ...valueParts] = fieldData.split(':');
@@ -199,12 +199,13 @@ export default function YAMLEditorComplete() {
                   validation_rules: []
                 };
                 currentCatalog.fields.push(currentField);
+                validationLevel = null; // Reset validation level for new field
               }
             }
           }
 
-          // Propiedades del campo
-          else if (currentField && currentContext === 'fields' && indent > 6 && trimmed.includes(':')) {
+          // Propiedades del campo (cualquier propiedad de nivel de campo)
+          else if (currentField && currentContext === 'fields' && indent >= 6 && trimmed.includes(':') && !trimmed.startsWith('- ')) {
             const [key, ...valueParts] = trimmed.split(':');
             const keyTrimmed = key.trim();
             let value = valueParts.join(':').trim();
@@ -222,12 +223,48 @@ export default function YAMLEditorComplete() {
               currentField.defaultValue = value;
             } else if (keyTrimmed === 'validation_rules') {
               validationLevel = 'field';
-              currentContext = 'validation_rules';
+              // No cambiar currentContext aquí, mantenerlo como 'fields'
             }
           }
 
-          // Validaciones
-          else if ((currentContext === 'validation_rules' || currentContext === 'row_validation' || currentContext === 'catalog_validation') && trimmed.startsWith('- ')) {
+          // Validaciones de campo (dentro de validation_rules del campo)
+          else if (validationLevel === 'field' && currentField && currentContext === 'fields' && trimmed.startsWith('- ') && indent >= 8) {
+            const validationData = trimmed.substring(2).trim();
+            if (validationData.includes(':')) {
+              const [key, ...valueParts] = validationData.split(':');
+              let value = valueParts.join(':').trim();
+              value = value.replace(/^["']|["']$/g, '');
+              
+              if (key.trim() === 'name') {
+                currentValidationRule = {
+                  name: value,
+                  description: '',
+                  rule: '',
+                  severity: 'error'
+                };
+                currentField.validation_rules.push(currentValidationRule);
+              }
+            }
+          }
+
+          // Propiedades de validaciones de campo
+          else if (currentValidationRule && validationLevel === 'field' && currentContext === 'fields' && indent >= 10 && trimmed.includes(':') && !trimmed.startsWith('- ')) {
+            const [key, ...valueParts] = trimmed.split(':');
+            const keyTrimmed = key.trim();
+            let value = valueParts.join(':').trim();
+            value = value.replace(/^["']|["']$/g, '');
+
+            if (keyTrimmed === 'description') {
+              currentValidationRule.description = value;
+            } else if (keyTrimmed === 'rule') {
+              currentValidationRule.rule = value;
+            } else if (keyTrimmed === 'severity') {
+              currentValidationRule.severity = value.toLowerCase();
+            }
+          }
+
+          // Validaciones de catálogo (row_validation y catalog_validation)
+          else if ((currentContext === 'row_validation' || currentContext === 'catalog_validation') && trimmed.startsWith('- ')) {
             const validationData = trimmed.substring(2).trim();
             if (validationData.includes(':')) {
               const [key, ...valueParts] = validationData.split(':');
@@ -242,9 +279,7 @@ export default function YAMLEditorComplete() {
                   severity: 'error'
                 };
                 
-                if (validationLevel === 'field' && currentField) {
-                  currentField.validation_rules.push(currentValidationRule);
-                } else if (validationLevel === 'row' && currentCatalog) {
+                if (validationLevel === 'row' && currentCatalog) {
                   currentCatalog.row_validation.push(currentValidationRule);
                 } else if (validationLevel === 'catalog' && currentCatalog) {
                   currentCatalog.catalog_validation.push(currentValidationRule);
@@ -253,8 +288,8 @@ export default function YAMLEditorComplete() {
             }
           }
 
-          // Propiedades de validaciones
-          else if (currentValidationRule && (currentContext === 'validation_rules' || currentContext === 'row_validation' || currentContext === 'catalog_validation') && indent > 8 && trimmed.includes(':')) {
+          // Propiedades de validaciones de catálogo
+          else if (currentValidationRule && (currentContext === 'row_validation' || currentContext === 'catalog_validation') && indent > 8 && trimmed.includes(':')) {
             const [key, ...valueParts] = trimmed.split(':');
             const keyTrimmed = key.trim();
             let value = valueParts.join(':').trim();
@@ -265,7 +300,7 @@ export default function YAMLEditorComplete() {
             } else if (keyTrimmed === 'rule') {
               currentValidationRule.rule = value;
             } else if (keyTrimmed === 'severity') {
-              currentValidationRule.severity = value;
+              currentValidationRule.severity = value.toLowerCase();
             }
           }
         }

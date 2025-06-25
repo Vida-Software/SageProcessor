@@ -1,0 +1,183 @@
+sage_yaml:
+  name: Configuración pck_homologaciones
+  description: Configuración para validar el archivo Excel de homologaciones
+  version: 1.0.0
+  author: Experto SAGE
+  comments: Archivo generado automáticamente
+catalogs:
+  pck_homologaciones:
+    name: Catálogo de Homologaciones
+    description: Catálogo que contiene los datos de homologaciones provenientes del
+      archivo Excel
+    filename: pck_homologaciones.xlsx
+    file_format:
+      type: EXCEL
+      header: true
+      delimiter: ','
+    fields:
+    - name: CodigoProducto
+      type: entero
+      required: true
+      unique: false
+      validation_rules:
+      - name: validar_entero
+        rule: df['CodigoProducto'].astype(str).str.match(r'^-?\d+$')
+        description: El campo CodigoProducto debe ser un número entero
+        severity: ERROR
+    - name: EAN13
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: DescripcionProducto
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: Negocio
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: SubNegocio
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: Empresa
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: Plataforma
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: SubPlataforma
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: CodigoCategoria
+      type: entero
+      required: false
+      unique: false
+      validation_rules:
+      - name: validar_entero
+        rule: df['CodigoCategoria'].astype(str).str.match(r'^-?\d+$')
+        description: El campo CodigoCategoria debe ser un número entero
+        severity: ERROR
+    - name: Categoria
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: CodigoFamilia
+      type: entero
+      required: false
+      unique: false
+      validation_rules:
+      - name: validar_entero
+        rule: df['CodigoFamilia'].astype(str).str.match(r'^-?\d+$')
+        description: El campo CodigoFamilia debe ser un número entero
+        severity: ERROR
+    - name: Familia
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: CodigoMarca
+      type: entero
+      required: false
+      unique: false
+      validation_rules:
+      - name: validar_entero
+        rule: df['CodigoMarca'].astype(str).str.match(r'^-?\d+$')
+        description: El campo CodigoMarca debe ser un número entero
+        severity: ERROR
+    - name: Marca
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: Variedad
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: Presentacion
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: UnidadesPorCaja
+      type: entero
+      required: false
+      unique: false
+      validation_rules:
+      - name: validar_entero
+        rule: df['UnidadesPorCaja'].astype(str).str.match(r'^-?\d+$')
+        description: El campo UnidadesPorCaja debe ser un número entero
+        severity: ERROR
+    - name: PesoUnidadBase
+      type: decimal
+      required: false
+      unique: false
+      validation_rules:
+      - name: validar_decimal
+        rule: df['PesoUnidadBase'].astype(str).str.match(r'^-?\d+(\.\d+)?$')
+        description: El campo PesoUnidadBase debe ser un número decimal
+        severity: ERROR
+    - name: PesoUnidadVenta
+      type: decimal
+      required: false
+      unique: false
+      validation_rules:
+      - name: validar_decimal
+        rule: df['PesoUnidadVenta'].astype(str).str.match(r'^-?\d+(\.\d+)?$')
+        description: El campo PesoUnidadVenta debe ser un número decimal
+        severity: ERROR
+    - name: EAN14
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: DUENOMARCA
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: CODDUENOMARCA
+      type: entero
+      required: false
+      unique: false
+      validation_rules:
+      - name: validar_entero
+        rule: df['CODDUENOMARCA'].astype(str).str.match(r'^-?\d+$')
+        description: El campo CODDUENOMARCA debe ser un número entero
+        severity: ERROR
+    - name: Estado
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    - name: CodigoReemplazo
+      type: texto
+      required: false
+      unique: false
+      validation_rules: []
+    catalog_validation:
+    - name: validar_num_columnas
+      rule: len(df.columns) == 24
+      description: El archivo debe tener exactamente 24 columnas
+      severity: ERROR
+packages:
+  paquete_homologaciones:
+    name: Paquete de Homologaciones
+    description: Paquete que agrupa el catálogo de homologaciones proveniente del
+      archivo Excel
+    file_format:
+      type: EXCEL
+    catalogs:
+    - pck_homologaciones
