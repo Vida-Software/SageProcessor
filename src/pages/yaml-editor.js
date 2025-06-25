@@ -140,11 +140,10 @@ const YAMLEditorPage = () => {
       event.target.value = '';
     };
 
-    // Función para parsear contenido YAML
+    // Función para parsear contenido YAML siguiendo especificación SAGE
     const parseYamlContent = (yamlContent) => {
       try {
-        // Parser básico para YAML sin dependencias externas
-        const lines = yamlContent.split('\n').filter(line => line.trim() && !line.trim().startsWith('#'));
+        const lines = yamlContent.split('\n');
         const result = {
           sage_yaml: {
             name: "Configuración SAGE",
@@ -165,70 +164,175 @@ const YAMLEditorPage = () => {
         let currentSection = null;
         let currentCatalog = null;
         let currentPackage = null;
-        let indent = 0;
+        let currentField = null;
+        let currentContext = null; // 'fields', 'file_format', 'validation_rules', etc.
+        let contextStack = [];
 
-        for (let line of lines) {
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
           const trimmed = line.trim();
-          const currentIndent = line.length - line.trimStart().length;
+          const indent = line.length - line.trimStart().length;
+          
+          // Saltar líneas vacías y comentarios
+          if (!trimmed || trimmed.startsWith('#')) continue;
 
           // Detectar secciones principales
           if (trimmed.startsWith('sage_yaml:')) {
             currentSection = 'sage_yaml';
+            currentContext = null;
+            contextStack = [];
             continue;
           } else if (trimmed.startsWith('catalogs:')) {
             currentSection = 'catalogs';
+            currentContext = null;
+            contextStack = [];
             continue;
           } else if (trimmed.startsWith('packages:') || trimmed.startsWith('package:')) {
-            currentSection = 'package';
+            currentSection = 'packages';
+            currentContext = null;
+            contextStack = [];
             continue;
           }
 
-          // Parsear contenido según la sección
-          if (currentSection === 'sage_yaml') {
+          // Parsear sage_yaml
+          if (currentSection === 'sage_yaml' && trimmed.includes(':')) {
             const [key, ...valueParts] = trimmed.split(':');
-            const value = valueParts.join(':').trim().replace(/['"]/g, '');
+            let value = valueParts.join(':').trim();
+            value = value.replace(/^["']|["']$/g, ''); // Remover comillas
             if (key && value) {
               result.sage_yaml[key.trim()] = value;
             }
-          } else if (currentSection === 'catalogs') {
-            // Parseo básico de catálogos
-            if (trimmed.includes(':') && currentIndent <= 2) {
-              const catalogName = trimmed.replace(':', '').trim();
-              if (catalogName && !catalogName.includes(' ')) {
-                currentCatalog = {
-                  name: catalogName,
-                  description: '',
-                  filename: '',
-                  file_format: { type: 'CSV', delimiter: ',', header: true },
-                  fields: []
-                };
-                result.catalogs.push(currentCatalog);
-              }
-            } else if (currentCatalog && trimmed.includes(':')) {
+          }
+
+          // Parsear catalogs
+          else if (currentSection === 'catalogs') {
+            // Nuevo catálogo (nivel 1)
+            if (indent <= 2 && trimmed.includes(':') && !trimmed.includes(' ')) {
+              const catalogKey = trimmed.replace(':', '').trim();
+              currentCatalog = {
+                name: catalogKey,
+                description: '',
+                filename: '',
+                file_format: { type: 'CSV', delimiter: ',', header: true },
+                fields: []
+              };
+              result.catalogs.push(currentCatalog);
+              currentContext = null;
+              currentField = null;
+              continue;
+            }
+
+            if (!currentCatalog) continue;
+
+            // Propiedades del catálogo
+            if (indent <= 4 && trimmed.includes(':')) {
               const [key, ...valueParts] = trimmed.split(':');
-              const value = valueParts.join(':').trim().replace(/['"]/g, '');
-              if (key === 'name' || key === 'description' || key === 'filename') {
-                currentCatalog[key.trim()] = value;
+              const keyTrimmed = key.trim();
+              let value = valueParts.join(':').trim();
+              value = value.replace(/^["']|["']$/g, '');
+
+              if (keyTrimmed === 'name') {
+                currentCatalog.name = value;
+              } else if (keyTrimmed === 'description') {
+                currentCatalog.description = value;
+              } else if (keyTrimmed === 'filename') {
+                currentCatalog.filename = value;
+              } else if (keyTrimmed === 'file_format') {
+                currentContext = 'file_format';
+              } else if (keyTrimmed === 'fields') {
+                currentContext = 'fields';
+                currentField = null;
+              } else if (keyTrimmed === 'type' && currentContext === 'file_format') {
+                currentCatalog.file_format.type = value;
+              } else if (keyTrimmed === 'delimiter' && currentContext === 'file_format') {
+                currentCatalog.file_format.delimiter = value;
+              } else if (keyTrimmed === 'header' && currentContext === 'file_format') {
+                currentCatalog.file_format.header = value === 'true';
               }
             }
-          } else if (currentSection === 'package') {
-            if (trimmed.includes(':') && currentIndent <= 2) {
-              const packageName = trimmed.replace(':', '').trim();
-              if (packageName && !packageName.includes(' ')) {
-                currentPackage = {
-                  name: packageName,
-                  description: '',
-                  catalogs: [],
-                  file_format: { type: 'ZIP' }
-                };
-                result.package = currentPackage;
+
+            // Nuevo campo (con guión)
+            else if (currentContext === 'fields' && trimmed.startsWith('- ')) {
+              const fieldData = trimmed.substring(2).trim();
+              if (fieldData.includes(':')) {
+                const [key, ...valueParts] = fieldData.split(':');
+                let value = valueParts.join(':').trim();
+                value = value.replace(/^["']|["']$/g, '');
+                
+                if (key.trim() === 'name') {
+                  currentField = {
+                    name: value,
+                    type: 'texto',
+                    required: false,
+                    unique: false
+                  };
+                  currentCatalog.fields.push(currentField);
+                }
               }
-            } else if (currentPackage && trimmed.includes(':')) {
+            }
+
+            // Propiedades del campo actual
+            else if (currentField && currentContext === 'fields' && indent > 6 && trimmed.includes(':')) {
               const [key, ...valueParts] = trimmed.split(':');
-              const value = valueParts.join(':').trim().replace(/['"]/g, '');
-              if (key === 'name' || key === 'description') {
-                currentPackage[key.trim()] = value;
+              const keyTrimmed = key.trim();
+              let value = valueParts.join(':').trim();
+              value = value.replace(/^["']|["']$/g, '');
+
+              if (keyTrimmed === 'type') {
+                currentField.type = value;
+              } else if (keyTrimmed === 'required') {
+                currentField.required = value === 'true';
+              } else if (keyTrimmed === 'unique') {
+                currentField.unique = value === 'true';
+              } else if (keyTrimmed === 'description') {
+                currentField.description = value;
+              } else if (keyTrimmed === 'defaultValue') {
+                currentField.defaultValue = value;
               }
+            }
+          }
+
+          // Parsear packages
+          else if (currentSection === 'packages') {
+            // Nuevo paquete
+            if (indent <= 2 && trimmed.includes(':') && !trimmed.includes(' ')) {
+              const packageKey = trimmed.replace(':', '').trim();
+              currentPackage = {
+                name: packageKey,
+                description: '',
+                catalogs: [],
+                file_format: { type: 'ZIP' }
+              };
+              result.package = currentPackage;
+              continue;
+            }
+
+            if (!currentPackage) continue;
+
+            // Propiedades del paquete
+            if (indent <= 4 && trimmed.includes(':')) {
+              const [key, ...valueParts] = trimmed.split(':');
+              const keyTrimmed = key.trim();
+              let value = valueParts.join(':').trim();
+              value = value.replace(/^["']|["']$/g, '');
+
+              if (keyTrimmed === 'name') {
+                currentPackage.name = value;
+              } else if (keyTrimmed === 'description') {
+                currentPackage.description = value;
+              } else if (keyTrimmed === 'file_format') {
+                currentContext = 'package_file_format';
+              } else if (keyTrimmed === 'catalogs') {
+                currentContext = 'package_catalogs';
+              } else if (keyTrimmed === 'type' && currentContext === 'package_file_format') {
+                currentPackage.file_format.type = value;
+              }
+            }
+
+            // Catálogos del paquete (array)
+            else if (currentContext === 'package_catalogs' && trimmed.startsWith('- ')) {
+              const catalogName = trimmed.substring(2).trim().replace(/^["']|["']$/g, '');
+              currentPackage.catalogs.push(catalogName);
             }
           }
         }
