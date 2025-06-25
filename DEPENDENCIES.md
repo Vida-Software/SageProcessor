@@ -132,10 +132,38 @@ dependencies = [
 sudo apt update
 sudo apt install -y postgresql postgresql-contrib
 
-# Configuración básica
-sudo -u postgres createuser sage
-sudo -u postgres createdb sage -O sage
-sudo -u postgres psql -c "ALTER USER sage PASSWORD 'sage_password';"
+# Inicialización automática usando script SQL
+sudo -u postgres psql -f sql/init_sage_database.sql
+
+# Verificación de instalación
+psql -h localhost -U sage -d sage -c "SELECT version();"
+```
+
+#### Script de Inicialización Completo
+El archivo **`sql/init_sage_database.sql`** incluye:
+- Creación de usuario `sage` con password `sage_password_2025`
+- Creación de base de datos `sage`
+- Todas las tablas necesarias del sistema:
+  - `configuraciones_email` - Configuraciones de casillas de correo
+  - `ejecuciones_yaml` - Registro de procesamiento de archivos
+  - `system_secrets` - Gestión centralizada de credenciales
+  - `suscripciones` - Gestión de suscriptores
+  - `actividad_sistema` - Logs de actividad
+  - `cloud_storage_connections` - Configuraciones de almacenamiento
+  - `backups_automaticos` - Control de respaldos
+- Índices optimizados para consultas frecuentes
+- Triggers y funciones para automatización
+- Datos de ejemplo y configuraciones iniciales
+- Vistas para estadísticas y reportes
+
+#### Credenciales por Defecto
+```bash
+Usuario: sage
+Password: sage_password_2025
+Base de datos: sage
+Host: localhost
+Puerto: 5432
+Cadena de conexión: postgresql://sage:sage_password_2025@localhost:5432/sage
 ```
 
 ### Nginx (Proxy Reverso)
@@ -179,24 +207,39 @@ autorestart=true
 ## Archivos de Configuración
 
 ### Variables de Entorno (.env)
+
+El sistema incluye un archivo **`.env.example`** completo con todas las configuraciones necesarias.
+
+#### Configuración Básica Requerida
 ```bash
-# Base de datos
-DATABASE_URL=postgresql://sage:password@localhost:5432/sage
+# Base de datos (usar credenciales del script SQL)
+DATABASE_URL=postgresql://sage:sage_password_2025@localhost:5432/sage
 PGHOST=localhost
 PGPORT=5432
 PGDATABASE=sage
 PGUSER=sage
-PGPASSWORD=password
-
-# APIs externas
-OPENROUTER_API_KEY=tu_clave_openrouter
-OPENAI_API_KEY=tu_clave_openai
-SENDGRID_API_KEY=tu_clave_sendgrid
+PGPASSWORD=sage_password_2025
 
 # Configuración de aplicación
 NODE_ENV=production
 PORT=5000
 ```
+
+#### Configuración Completa Disponible en .env.example
+- **APIs de IA**: OpenRouter, OpenAI
+- **Servicios de Email**: SendGrid, SMTP
+- **Cloud Storage**: AWS S3, Azure Blob, Google Cloud, MinIO
+- **Seguridad**: JWT, Session, Encryption keys
+- **Webhooks**: Configuración de endpoints
+- **Monitoreo**: Logs y debugging
+- **Casillas de Email**: Configuraciones IMAP/SMTP
+
+#### Gestión de Secrets via Interfaz Web
+Ubicación: **`/admin/system-secrets`**
+- Formularios dinámicos por tipo de credencial
+- Validación y prueba de conexiones
+- Almacenamiento seguro con cifrado
+- Categorización por servicios
 
 ### Next.js (next.config.js)
 ```javascript
@@ -287,13 +330,11 @@ sudo ln -sf /usr/bin/pip3 /usr/bin/pip
 # Instalar PostgreSQL
 sudo apt install -y postgresql postgresql-contrib
 
-# Configurar base de datos
-sudo -u postgres psql << EOF
-CREATE USER sage WITH PASSWORD 'tu_password';
-CREATE DATABASE sage OWNER sage;
-GRANT ALL PRIVILEGES ON DATABASE sage TO sage;
-\q
-EOF
+# Ejecutar script de inicialización completo
+sudo -u postgres psql -f sql/init_sage_database.sql
+
+# Verificar instalación
+psql -h localhost -U sage -d sage -c "\dt"
 ```
 
 ### 5. Clonación y Configuración del Proyecto

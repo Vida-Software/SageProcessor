@@ -234,6 +234,51 @@ psql -h localhost -U sage -d sage -c "SELECT 1;"
 curl http://localhost:5000
 ```
 
+## Archivos de Configuración y Credenciales
+
+### Ubicación de Archivos Importantes
+
+#### Scripts de Base de Datos
+- **`sql/init_sage_database.sql`** - Script completo de inicialización de PostgreSQL
+- **Ejecutar con**: `psql -U postgres -f sql/init_sage_database.sql`
+
+#### Credenciales y Configuración
+- **`.env.example`** - Plantilla de variables de entorno (copiar a `.env`)
+- **Ubicación de secrets**: `/admin/system-secrets` (interfaz web)
+- **Configuración BD**: Tabla `configuraciones_email` en PostgreSQL
+
+#### Credenciales por Defecto
+```bash
+# Base de datos PostgreSQL
+Usuario: sage
+Password: sage_password_2025
+Base de datos: sage
+Host: localhost
+Puerto: 5432
+```
+
+### Inicialización Rápida de Base de Datos
+
+```bash
+# 1. Ejecutar script de inicialización
+sudo -u postgres psql -f sql/init_sage_database.sql
+
+# 2. Verificar instalación
+psql -h localhost -U sage -d sage -c "SELECT COUNT(*) FROM system_secrets;"
+
+# 3. Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales reales
+```
+
+### Gestión de Secrets
+
+El sistema incluye un centro de gestión de credenciales en `/admin/system-secrets` que maneja:
+- APIs de IA (OpenRouter, OpenAI)
+- Configuraciones de base de datos
+- Servicios externos (SendGrid, webhooks)
+- Configuración de seguridad (JWT, cifrado)
+
 ## Documentación Detallada
 
 Para información completa sobre dependencias y configuración, consultar:
