@@ -111,7 +111,7 @@ SAGE (Sistema Avanzado para la Gestión de Configuraciones Organizacionales) is 
 
 ## Changelog
 
-- June 25, 2025: Created complete YAML Editor at `/yaml-editor-complete` with full SAGE specification support
+- June 25, 2025: Reverted YAML Editor to "En construcción" status - implementation attempts unsuccessful
 - June 25, 2025: Initial setup
 
 ## User Preferences
