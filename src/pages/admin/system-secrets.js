@@ -35,23 +35,104 @@ const SYSTEM_SECRET_CATEGORIES = {
   }
 };
 
+const SECRET_TYPES = {
+  // APIs de IA - Solo requieren API Key
+  'OPENROUTER_API_KEY': {
+    type: 'simple',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', required: true }
+    ]
+  },
+  'OPENAI_API_KEY': {
+    type: 'simple',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', required: true }
+    ]
+  },
+  
+  // Base de datos - Múltiples campos
+  'DATABASE_MAIN': {
+    type: 'database',
+    fields: [
+      { name: 'host', label: 'Servidor/Host', type: 'text', required: true, placeholder: 'localhost' },
+      { name: 'port', label: 'Puerto', type: 'number', required: true, placeholder: '5432' },
+      { name: 'database', label: 'Nombre Base de Datos', type: 'text', required: true, placeholder: 'sage_db' },
+      { name: 'username', label: 'Usuario', type: 'text', required: true, placeholder: 'postgres' },
+      { name: 'password', label: 'Contraseña', type: 'password', required: true },
+      { name: 'ssl_mode', label: 'Modo SSL', type: 'select', options: ['disable', 'require', 'prefer'], default: 'prefer' }
+    ]
+  },
+  'DATABASE_BACKUP': {
+    type: 'database',
+    fields: [
+      { name: 'host', label: 'Servidor Backup', type: 'text', required: true },
+      { name: 'port', label: 'Puerto', type: 'number', required: true, placeholder: '5432' },
+      { name: 'database', label: 'Base de Datos', type: 'text', required: true },
+      { name: 'username', label: 'Usuario', type: 'text', required: true },
+      { name: 'password', label: 'Contraseña', type: 'password', required: true }
+    ]
+  },
+  
+  // Servicios externos
+  'SENDGRID_CONFIG': {
+    type: 'email_service',
+    fields: [
+      { name: 'api_key', label: 'SendGrid API Key', type: 'password', required: true },
+      { name: 'from_email', label: 'Email Remitente', type: 'email', required: true },
+      { name: 'from_name', label: 'Nombre Remitente', type: 'text', required: true, default: 'Sistema SAGE' }
+    ]
+  },
+  'WEBHOOK_CONFIG': {
+    type: 'webhook',
+    fields: [
+      { name: 'secret', label: 'Webhook Secret', type: 'password', required: true },
+      { name: 'endpoint', label: 'URL Endpoint', type: 'url', required: false },
+      { name: 'timeout', label: 'Timeout (segundos)', type: 'number', default: 30 }
+    ]
+  },
+  
+  // Seguridad
+  'JWT_CONFIG': {
+    type: 'security',
+    fields: [
+      { name: 'secret', label: 'JWT Secret', type: 'password', required: true },
+      { name: 'expiry', label: 'Expiración (horas)', type: 'number', default: 24 },
+      { name: 'algorithm', label: 'Algoritmo', type: 'select', options: ['HS256', 'HS384', 'HS512'], default: 'HS256' }
+    ]
+  },
+  'SESSION_CONFIG': {
+    type: 'security',
+    fields: [
+      { name: 'secret', label: 'Session Secret', type: 'password', required: true },
+      { name: 'max_age', label: 'Duración (minutos)', type: 'number', default: 1440 }
+    ]
+  },
+  'ENCRYPTION_CONFIG': {
+    type: 'security',
+    fields: [
+      { name: 'key', label: 'Encryption Key', type: 'password', required: true },
+      { name: 'algorithm', label: 'Algoritmo', type: 'select', options: ['AES-256-GCM', 'AES-256-CBC'], default: 'AES-256-GCM' }
+    ]
+  }
+};
+
 const PREDEFINED_SECRETS = {
   'ai_apis': [
-    { key: 'OPENROUTER_API_KEY', name: 'OpenRouter API Key', description: 'Clave para acceso a OpenRouter para YAML Studio', masked: true },
-    { key: 'OPENAI_API_KEY', name: 'OpenAI API Key', description: 'Clave para servicios de OpenAI', masked: true }
+    { key: 'OPENROUTER_API_KEY', name: 'OpenRouter API Key', description: 'Clave para acceso a OpenRouter para YAML Studio' },
+    { key: 'OPENAI_API_KEY', name: 'OpenAI API Key', description: 'Clave para servicios de OpenAI' }
   ],
   'database': [
-    { key: 'DATABASE_URL', name: 'PostgreSQL Connection URL', description: 'URL de conexión principal a PostgreSQL', masked: true },
-    { key: 'DB_BACKUP_CREDENTIALS', name: 'Credenciales de Backup', description: 'Credenciales para respaldos automáticos', masked: true }
+    { key: 'DATABASE_MAIN', name: 'PostgreSQL Principal', description: 'Configuración de conexión a PostgreSQL principal' },
+    { key: 'DATABASE_BACKUP', name: 'PostgreSQL Backup', description: 'Configuración para base de datos de respaldo' }
   ],
   'external_services': [
-    { key: 'SENDGRID_API_KEY', name: 'SendGrid API Key', description: 'Clave para servicio de email SendGrid', masked: true },
-    { key: 'WEBHOOK_SECRET', name: 'Webhook Secret', description: 'Secreto para validación de webhooks', masked: true }
+    { key: 'SENDGRID_CONFIG', name: 'SendGrid Email Service', description: 'Configuración para servicio de email SendGrid' },
+    { key: 'WEBHOOK_CONFIG', name: 'Webhook Configuration', description: 'Configuración para webhooks y notificaciones' }
   ],
   'security': [
-    { key: 'JWT_SECRET', name: 'JWT Secret Key', description: 'Clave secreta para tokens JWT', masked: true },
-    { key: 'SESSION_SECRET', name: 'Session Secret', description: 'Clave para cifrado de sesiones', masked: true },
-    { key: 'ENCRYPTION_KEY', name: 'Encryption Key', description: 'Clave maestra de cifrado', masked: true }
+    { key: 'JWT_CONFIG', name: 'JWT Configuration', description: 'Configuración para tokens JWT' },
+    { key: 'SESSION_CONFIG', name: 'Session Management', description: 'Configuración para gestión de sesiones' },
+    { key: 'ENCRYPTION_CONFIG', name: 'Encryption Settings', description: 'Configuración de cifrado del sistema' }
   ]
 };
 
@@ -59,7 +140,7 @@ export default function SystemSecretsPage() {
   const [secrets, setSecrets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingSecret, setEditingSecret] = useState(null);
-  const [newSecret, setNewSecret] = useState({ category: '', key: '', value: '', description: '', masked: false });
+  const [newSecret, setNewSecret] = useState({ category: '', key: '', value: '', description: '', masked: false, config: {} });
   const [showAddForm, setShowAddForm] = useState(false);
   const [visibleSecrets, setVisibleSecrets] = useState(new Set());
 
@@ -128,14 +209,112 @@ export default function SystemSecretsPage() {
   }, {});
 
   const addPredefinedSecret = (category, predefinedSecret) => {
+    const secretType = SECRET_TYPES[predefinedSecret.key];
+    const initialConfig = {};
+    
+    // Initialize config with default values
+    if (secretType) {
+      secretType.fields.forEach(field => {
+        if (field.default !== undefined) {
+          initialConfig[field.name] = field.default;
+        } else if (field.type === 'number') {
+          initialConfig[field.name] = '';
+        } else {
+          initialConfig[field.name] = '';
+        }
+      });
+    }
+    
     setNewSecret({
       category,
       key: predefinedSecret.key,
       value: '',
       description: predefinedSecret.description,
-      masked: predefinedSecret.masked
+      masked: true,
+      config: initialConfig
     });
     setShowAddForm(true);
+  };
+
+  const handleConfigChange = (fieldName, value) => {
+    setNewSecret({
+      ...newSecret,
+      config: {
+        ...newSecret.config,
+        [fieldName]: value
+      }
+    });
+  };
+
+  const renderConfigFields = (secretKey, config, onChange) => {
+    const secretType = SECRET_TYPES[secretKey];
+    if (!secretType) return null;
+
+    return (
+      <div className="space-y-4">
+        <h4 className="font-medium text-gray-700">Configuración específica:</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {secretType.fields.map((field) => (
+            <div key={field.name}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {field.label} {field.required && '*'}
+              </label>
+              
+              {field.type === 'select' ? (
+                <select
+                  value={config[field.name] || field.default || ''}
+                  onChange={(e) => onChange(field.name, e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  required={field.required}
+                >
+                  {field.options.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type={field.type}
+                  value={config[field.name] || ''}
+                  onChange={(e) => onChange(field.name, e.target.value)}
+                  placeholder={field.placeholder}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  required={field.required}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSecretDisplay = (secret) => {
+    if (!secret.config && !secret.display_value) {
+      return <span className="text-gray-500 text-sm">Sin configurar</span>;
+    }
+
+    if (secret.config && Object.keys(secret.config).length > 0) {
+      return (
+        <div className="space-y-2">
+          {Object.entries(secret.config).map(([key, value]) => (
+            <div key={key} className="flex items-center text-sm">
+              <span className="font-medium text-gray-600 w-24">{key}:</span>
+              <code className="bg-gray-200 px-2 py-1 rounded text-xs">
+                {key.toLowerCase().includes('password') || key.toLowerCase().includes('secret') || key.toLowerCase().includes('key') 
+                  ? '••••••••' 
+                  : value || 'Sin valor'}
+              </code>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <code className="bg-gray-200 px-2 py-1 rounded text-sm font-mono">
+        {secret.display_value || 'Sin valor'}
+      </code>
+    );
   };
 
   if (loading) {

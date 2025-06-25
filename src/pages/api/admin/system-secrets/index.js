@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       res.status(200).json(secrets);
     } 
     else if (req.method === 'POST') {
-      const { category, key, value, description, masked } = req.body;
+      const { category, key, value, description, masked, config } = req.body;
       
       if (!category || !key) {
         return res.status(400).json({ 
@@ -28,7 +28,8 @@ export default async function handler(req, res) {
         key,
         value,
         description,
-        masked: masked || false
+        masked: masked || false,
+        config: config || null
       });
       
       res.status(200).json({ 
@@ -68,6 +69,12 @@ async function getSystemSecrets(db) {
       )
     `);
     
+    // Agregar columna config si no existe
+    await client.query(`
+      ALTER TABLE system_secrets 
+      ADD COLUMN IF NOT EXISTS config JSONB
+    `);
+    
     const result = await client.query(`
       SELECT 
         id,
@@ -83,6 +90,7 @@ async function getSystemSecrets(db) {
         value IS NOT NULL AND value != '' as has_value,
         description,
         masked,
+        config,
         active,
         created_at,
         updated_at
@@ -101,20 +109,21 @@ async function saveSystemSecret(db, secretData) {
   const client = await db.connect();
   
   try {
-    const { category, key, value, description, masked } = secretData;
+    const { category, key, value, description, masked, config } = secretData;
     
     const result = await client.query(`
-      INSERT INTO system_secrets (category, key, value, description, masked, updated_at)
-      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+      INSERT INTO system_secrets (category, key, value, description, masked, config, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
       ON CONFLICT (key) 
       DO UPDATE SET 
         category = EXCLUDED.category,
         value = EXCLUDED.value,
         description = EXCLUDED.description,
         masked = EXCLUDED.masked,
+        config = EXCLUDED.config,
         updated_at = CURRENT_TIMESTAMP
-      RETURNING id, category, key, description, masked, active, created_at, updated_at
-    `, [category, key, value, description, masked]);
+      RETURNING id, category, key, description, masked, config, active, created_at, updated_at
+    `, [category, key, value, description, masked, JSON.stringify(config)]);
     
     return result.rows[0];
   } finally {
