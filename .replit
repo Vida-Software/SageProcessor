@@ -35,11 +35,7 @@ args = "Janitor Manual Run"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Web Server Proxy"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Next.js Development Server with Turbopack"
+args = "SAGE Web Server"
 
 [[workflows.workflow]]
 name = "SAGE Daemon 2"
@@ -102,33 +98,13 @@ task = "shell.exec"
 args = "cd /home/runner/workspace && python janitor_daemon.py"
 
 [[workflows.workflow]]
-name = "Web Server Proxy"
+name = "SAGE Web Server"
 author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd /home/runner/workspace && curl -s http://localhost:3000/admin/cloud-secrets/1/buckets | grep -A 20 \"Examinar bucket\""
-
-[[workflows.workflow]]
-name = "Next.js Development Server with Turbopack"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd /home/runner/workspace && npx next dev -p 3000"
-waitForPort = 3000
+args = "cd /home/runner/workspace && npm run dev"
+waitForPort = 5000
 
 [deployment]
 run = ["sh", "-c", "npm run dev"]
