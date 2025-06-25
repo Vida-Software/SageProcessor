@@ -50,68 +50,206 @@ const GeneralYamlSection = ({ data, onChange }) => (
   </div>
 );
 
-const CatalogsYamlSection = ({ catalogs, onAdd, onUpdate, onDelete, dataTypes, fileTypes, severityTypes }) => (
-  <div className="space-y-6">
-    <div className="flex justify-between items-center">
-      <h4 className="text-lg font-medium text-gray-900">Catálogos</h4>
-      <button
-        onClick={onAdd}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-      >
-        Agregar Catálogo
-      </button>
-    </div>
-    
-    {catalogs.length === 0 ? (
-      <p className="text-gray-500 text-center py-8">No hay catálogos configurados</p>
-    ) : (
-      <div className="space-y-4">
-        {catalogs.map((catalog, index) => (
-          <div key={index} className="border border-gray-200 rounded-lg p-4">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                  <input
-                    type="text"
-                    value={catalog.name || ''}
-                    onChange={(e) => onUpdate(index, { ...catalog, name: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                  <input
-                    type="text"
-                    value={catalog.description || ''}
-                    onChange={(e) => onUpdate(index, { ...catalog, description: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-              </div>
-              <button
-                onClick={() => onDelete(index)}
-                className="ml-4 p-2 text-red-600 hover:text-red-800"
-              >
-                Eliminar
-              </button>
-            </div>
-            
-            <div className="mt-4">
-              <h5 className="text-sm font-medium text-gray-700 mb-2">Campos ({catalog.fields?.length || 0})</h5>
-              <div className="text-sm text-gray-500">
-                {catalog.fields?.length > 0 ? 
-                  `${catalog.fields.length} campos configurados` : 
-                  'No hay campos configurados'
-                }
-              </div>
-            </div>
-          </div>
-        ))}
+const CatalogsYamlSection = ({ catalogs, onAdd, onUpdate, onDelete, dataTypes, fileTypes, severityTypes }) => {
+  const [expandedCatalog, setExpandedCatalog] = React.useState(null);
+  const [expandedField, setExpandedField] = React.useState(null);
+
+  const toggleCatalog = (index) => {
+    setExpandedCatalog(expandedCatalog === index ? null : index);
+    setExpandedField(null);
+  };
+
+  const toggleField = (catalogIndex, fieldIndex) => {
+    const key = `${catalogIndex}-${fieldIndex}`;
+    setExpandedField(expandedField === key ? null : key);
+  };
+
+  const addField = (catalogIndex) => {
+    const catalog = catalogs[catalogIndex];
+    const newField = {
+      name: `Campo ${(catalog.fields?.length || 0) + 1}`,
+      type: 'texto',
+      required: false,
+      description: '',
+      validations: []
+    };
+    const updatedCatalog = {
+      ...catalog,
+      fields: [...(catalog.fields || []), newField]
+    };
+    onUpdate(catalogIndex, updatedCatalog);
+  };
+
+  const updateField = (catalogIndex, fieldIndex, updatedField) => {
+    const catalog = catalogs[catalogIndex];
+    const updatedFields = [...catalog.fields];
+    updatedFields[fieldIndex] = updatedField;
+    const updatedCatalog = {
+      ...catalog,
+      fields: updatedFields
+    };
+    onUpdate(catalogIndex, updatedCatalog);
+  };
+
+  const deleteField = (catalogIndex, fieldIndex) => {
+    const catalog = catalogs[catalogIndex];
+    const updatedFields = catalog.fields.filter((_, i) => i !== fieldIndex);
+    const updatedCatalog = {
+      ...catalog,
+      fields: updatedFields
+    };
+    onUpdate(catalogIndex, updatedCatalog);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-medium text-gray-900">Catálogos</h4>
+        <button
+          onClick={onAdd}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Agregar Catálogo
+        </button>
       </div>
-    )}
-  </div>
-);
+      
+      {catalogs.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">No hay catálogos configurados</p>
+      ) : (
+        <div className="space-y-4">
+          {catalogs.map((catalog, catalogIndex) => (
+            <div key={catalogIndex} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                    <input
+                      type="text"
+                      value={catalog.name || ''}
+                      onChange={(e) => onUpdate(catalogIndex, { ...catalog, name: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <input
+                      type="text"
+                      value={catalog.description || ''}
+                      onChange={(e) => onUpdate(catalogIndex, { ...catalog, description: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                </div>
+                <div className="flex space-x-2 ml-4">
+                  <button
+                    onClick={() => toggleCatalog(catalogIndex)}
+                    className="p-2 text-blue-600 hover:text-blue-800"
+                  >
+                    {expandedCatalog === catalogIndex ? 'Ocultar' : 'Campos'}
+                  </button>
+                  <button
+                    onClick={() => onDelete(catalogIndex)}
+                    className="p-2 text-red-600 hover:text-red-800"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <div className="flex justify-between items-center">
+                  <h5 className="text-sm font-medium text-gray-700">
+                    Campos ({catalog.fields?.length || 0})
+                  </h5>
+                  {expandedCatalog === catalogIndex && (
+                    <button
+                      onClick={() => addField(catalogIndex)}
+                      className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Agregar Campo
+                    </button>
+                  )}
+                </div>
+                
+                {expandedCatalog === catalogIndex && (
+                  <div className="mt-4 space-y-3">
+                    {catalog.fields?.map((field, fieldIndex) => (
+                      <div key={fieldIndex} className="border border-gray-100 rounded p-3 bg-gray-50">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-medium text-sm">{field.name}</span>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => toggleField(catalogIndex, fieldIndex)}
+                              className="text-xs text-blue-600 hover:text-blue-800"
+                            >
+                              {expandedField === `${catalogIndex}-${fieldIndex}` ? 'Ocultar' : 'Editar'}
+                            </button>
+                            <button
+                              onClick={() => deleteField(catalogIndex, fieldIndex)}
+                              className="text-xs text-red-600 hover:text-red-800"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {expandedField === `${catalogIndex}-${fieldIndex}` && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Nombre</label>
+                              <input
+                                type="text"
+                                value={field.name || ''}
+                                onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, name: e.target.value })}
+                                className="w-full p-2 text-sm border border-gray-300 rounded-md"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Tipo</label>
+                              <select
+                                value={field.type || 'texto'}
+                                onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, type: e.target.value })}
+                                className="w-full p-2 text-sm border border-gray-300 rounded-md"
+                              >
+                                {dataTypes.map(type => (
+                                  <option key={type.value} value={type.value}>{type.label}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Descripción</label>
+                              <input
+                                type="text"
+                                value={field.description || ''}
+                                onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, description: e.target.value })}
+                                className="w-full p-2 text-sm border border-gray-300 rounded-md"
+                              />
+                            </div>
+                            <div className="flex items-center">
+                              <label className="flex items-center text-xs font-medium text-gray-700">
+                                <input
+                                  type="checkbox"
+                                  checked={field.required || false}
+                                  onChange={(e) => updateField(catalogIndex, fieldIndex, { ...field, required: e.target.checked })}
+                                  className="mr-2"
+                                />
+                                Campo requerido
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const PackageYamlSection = ({ packageData, catalogs, onChange, fileTypes }) => (
   <div className="space-y-4">
