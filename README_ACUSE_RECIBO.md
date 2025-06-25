@@ -88,5 +88,3 @@ En futuras actualizaciones se podría considerar:
 1. Personalizar el mensaje de acuse de recibo según el tipo de remitente o asunto.
 2. Implementar un sistema anti-spam que limite los acuses de recibo a un mismo remitente en un periodo corto de tiempo.
 3. Incluir información adicional en la respuesta, como instrucciones generales sobre el uso del sistema.
-
-Ahora debemos asegurarnos de que todo funciona

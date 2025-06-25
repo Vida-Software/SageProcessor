@@ -11,20 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { dias, fechaInicio, fechaFin, intervalType = 'day' } = req.query;
-    
-    // Calcular fechas basado en parámetros
-    let startDate, endDate;
-    if (fechaInicio && fechaFin) {
-      startDate = fechaInicio;
-      endDate = fechaFin;
-    } else {
-      const daysBack = parseInt(dias as string) || 30;
-      endDate = new Date().toISOString().split('T')[0];
-      startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    }
-
-    console.log(`Consulta de tendencia: fechaInicio=${startDate}, fechaFin=${endDate}`);
+    const { from, to, intervalType = 'day' } = req.query;
     let dateFormat = "'DD/MM/YYYY'";
     let intervalSql = "day";
     
@@ -38,23 +25,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const query = `
+      WITH dates AS (
+        SELECT 
+          date_trunc('${intervalSql}', generate_series($1::timestamp, $2::timestamp, '1 ${intervalSql}'::interval)) AS date
+      ),
+      estados_totales AS (
+        SELECT 
+          date_trunc('${intervalSql}', fecha_ejecucion) AS date,
+          COUNT(*) AS total,
+          COUNT(CASE WHEN estado = 'Éxito' THEN 1 END) AS exito,
+          COUNT(CASE WHEN estado = 'Error' THEN 1 END) AS error,
+          COUNT(CASE WHEN estado = 'Pendiente' THEN 1 END) AS pendiente
+        FROM 
+          ejecuciones_yaml
+        WHERE 
+          fecha_ejecucion BETWEEN $1 AND $2
+        GROUP BY 
+          date_trunc('${intervalSql}', fecha_ejecucion)
+      )
       SELECT 
-        TO_CHAR(DATE_TRUNC('day', fecha_ejecucion), 'DD/MM') as fecha,
-        COUNT(*) as procesados,
-        COUNT(CASE WHEN estado = 'Éxito' THEN 1 END) as exitosos,
-        COUNT(CASE WHEN estado = 'Parcial' THEN 1 END) as parciales,
-        COUNT(CASE WHEN estado = 'Fallido' THEN 1 END) as fallidos
+        to_char(d.date, ${dateFormat}) AS periodo,
+        COALESCE(e.total, 0) AS total,
+        COALESCE(e.exito, 0) AS exito,
+        COALESCE(e.error, 0) AS error,
+        COALESCE(e.pendiente, 0) AS pendiente
       FROM 
-        ejecuciones_yaml
-      WHERE fecha_ejecucion >= $1::date AND fecha_ejecucion <= $2::date
-      GROUP BY 
-        DATE_TRUNC('day', fecha_ejecucion)
+        dates d
+        LEFT JOIN estados_totales e ON d.date = e.date
       ORDER BY 
-        DATE_TRUNC('day', fecha_ejecucion)
+        d.date ASC;
     `;
 
-    console.log('Consulta de tendencia: \n', query);
-    const result = await pool.query(query, [startDate, endDate]);
+    const result = await pool.query(query, [from, to]);
 
     // Devolver los datos de tendencia
     res.status(200).json({
