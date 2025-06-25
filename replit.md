@@ -111,12 +111,15 @@ SAGE (Sistema Avanzado para la Gestión de Configuraciones Organizacionales) is 
 
 ## Changelog
 
-- June 25, 2025: System Secrets Management Added
-  - Created new system secrets center at /admin/system-secrets
-  - Added API endpoint for managing system-wide credentials
+- June 25, 2025: System Secrets Management Enhanced
+  - Created comprehensive system secrets center at /admin/system-secrets
+  - Implemented dynamic form system with structured field configurations
+  - Added support for complex credential types (database connections, API configurations)
+  - Built connection testing functionality for database and API credentials
+  - Enhanced security with encrypted config storage and masked field display
   - Organized secrets by categories: AI APIs, Database, External Services, Security
-  - Includes predefined secret templates for common integrations
-  - Secure handling with masked values and visibility toggles
+  - Added predefined templates for PostgreSQL, OpenRouter, OpenAI, SendGrid configurations
+  - Integrated test endpoints for validating database connections and API keys
   - Added to configuration menu for easy access
 - June 25, 2025: Data Boxes Layout Fixed
   - Fixed card layout on large screens to use vertical stacking

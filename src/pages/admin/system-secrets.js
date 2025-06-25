@@ -485,15 +485,26 @@ export default function SystemSecretsPage() {
                     {renderSecretDisplay(secret)}
                   </div>
                   
-                  <Button
-                    icon={PencilIcon}
-                    variant="light"
-                    size="xs"
-                    onClick={() => setEditingSecret(secret)}
-                    className="ml-4"
-                  >
-                    Editar
-                  </Button>
+                  <div className="flex space-x-2 ml-4">
+                    <Button
+                      icon={PencilIcon}
+                      variant="light"
+                      size="xs"
+                      onClick={() => setEditingSecret(secret)}
+                    >
+                      Editar
+                    </Button>
+                    {(secret.config && Object.keys(secret.config).length > 0) && (
+                      <Button
+                        size="xs"
+                        variant="light"
+                        color="green"
+                        onClick={() => handleTestConnection(secret)}
+                      >
+                        Probar
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
