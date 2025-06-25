@@ -56,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         COUNT(CASE WHEN estado = 'Éxito' THEN 1 END) AS archivos_exitosos,
         COUNT(CASE WHEN estado IN ('pendiente', 'en_proceso') THEN 1 END) AS archivos_pendientes,
         COUNT(CASE WHEN estado = 'Fallido' THEN 1 END) AS archivos_fallidos,
-        (SELECT COUNT(*) FROM casillas WHERE fecha_vencimiento < NOW() + INTERVAL '30 days') as casillas_por_vencer
+        (SELECT COUNT(*) FROM casillas) as casillas_por_vencer
       FROM 
         ejecuciones_yaml
         ${whereClause}

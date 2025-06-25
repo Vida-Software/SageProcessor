@@ -11,55 +11,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Extraer límite de registros a devolver
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
+    const { dias, fechaInicio, fechaFin } = req.query;
     
-    // Consulta para obtener las últimas ejecuciones con información de casilla y emisor
+    // Calcular fechas basado en parámetros
+    let startDate, endDate;
+    if (fechaInicio && fechaFin) {
+      startDate = fechaInicio;
+      endDate = fechaFin;
+    } else {
+      const daysBack = parseInt(dias as string) || 30;
+      endDate = new Date().toISOString().split('T')[0];
+      startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    }
+
+    console.log(`Consulta de últimas ejecuciones: fechaInicio=${startDate}, fechaFin=${endDate}`);
+    
     const query = `
       SELECT 
         e.id,
         e.uuid,
-        e.fecha_ejecucion,
-        e.nombre_yaml,
-        e.archivo_datos,
+        e.fecha_ejecucion as fecha,
+        e.nombre_yaml as "nombreYaml",
+        e.archivo_datos as "archivoDatos", 
         e.estado,
-        e.errores_detectados,
-        e.warnings_detectados,
-        c.nombre_yaml as casilla_nombre,
-        c.id as casilla_id,
-        em.nombre as emisor_nombre,
-        em.id as emisor_id
+        e.errores_detectados as errores,
+        e.warnings_detectados as warnings,
+        json_build_object('id', c.id, 'nombre', c.nombre_yaml) as casilla,
+        json_build_object('id', em.id, 'nombre', em.nombre) as emisor
       FROM 
         ejecuciones_yaml e
-        JOIN casillas c ON e.casilla_id = c.id
+        LEFT JOIN casillas c ON e.casilla_id = c.id
         LEFT JOIN emisores em ON e.emisor_id = em.id
+      WHERE e.fecha_ejecucion >= $1::date AND e.fecha_ejecucion <= $2::date
       ORDER BY 
         e.fecha_ejecucion DESC
-      LIMIT $1
+      LIMIT 20
     `;
 
-    const result = await pool.query(query, [limit]);
+    console.log('Consulta de últimas ejecuciones: \n', query);
+    const result = await pool.query(query, [startDate, endDate]);
 
-    // Devolver las últimas ejecuciones formateadas
+    // Devolver las últimas ejecuciones 
     res.status(200).json({
-      ejecuciones: result.rows.map(row => ({
-        id: row.id,
-        uuid: row.uuid,
-        fecha: row.fecha_ejecucion,
-        nombreYaml: row.nombre_yaml,
-        archivoDatos: row.archivo_datos,
-        estado: row.estado,
-        errores: row.errores_detectados,
-        warnings: row.warnings_detectados,
-        casilla: {
-          id: row.casilla_id,
-          nombre: row.casilla_nombre
-        },
-        emisor: {
-          id: row.emisor_id,
-          nombre: row.emisor_nombre
-        }
-      }))
+      ejecuciones: result.rows
     });
   } catch (error) {
     console.error('Error obteniendo últimas ejecuciones:', error);
