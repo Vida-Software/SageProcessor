@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import Head from 'next/head';
-import { ChevronDownIcon, ChevronRightIcon, DocumentArrowDownIcon, DocumentArrowUpIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+// ARCHIVO BORRADO - USAR yaml-editor-new.js
 
 export default function YAMLEditorComplete() {
   // Estado principal del YAML
