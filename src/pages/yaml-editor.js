@@ -273,10 +273,16 @@ const YAMLEditorPage = () => {
 
             // Nuevo campo (nivel 4, con guión seguido de name:)
             if (indent === 4 && trimmed.startsWith('- ')) {
+              console.log(`🔍 DEBUGGING: Línea nivel 4 con guión: "${line}"`);
+              console.log(`🔍 Catálogo actual: ${currentCatalog ? currentCatalog.name : 'NINGUNO'}`);
+              
               const fieldLine = trimmed.substring(2).trim();
+              console.log(`🔍 Contenido después del guión: "${fieldLine}"`);
+              
               // Puede ser "- name: NombreCampo" o solo "- name: NombreCampo"
               if (fieldLine.startsWith('name:')) {
                 const fieldName = fieldLine.substring(5).trim().replace(/^["']|["']$/g, '');
+                console.log(`🔍 CAMPO DETECTADO: "${fieldName}"`);
                 currentField = {
                   name: fieldName,
                   type: 'texto',
@@ -290,8 +296,9 @@ const YAMLEditorPage = () => {
                 inFieldValidationRules = false;
                 inRowValidation = false;
                 inCatalogValidation = false;
-                console.log(`Nuevo campo encontrado: ${fieldName}`);
+                console.log(`✅ Campo agregado: ${fieldName}. Total campos en catálogo: ${currentCatalog.fields.length}`);
               } else {
+                console.log(`🔍 Guión sin name: inmediato, esperando siguiente línea`);
                 // Caso donde el guión está solo y name: viene en la siguiente línea
                 // Crear un campo temporal para la siguiente línea
                 currentField = {
@@ -307,6 +314,7 @@ const YAMLEditorPage = () => {
                 inFieldValidationRules = false;
                 inRowValidation = false;
                 inCatalogValidation = false;
+                console.log(`🔍 Campo temporal creado, esperando name:`);
               }
               continue;
             }
