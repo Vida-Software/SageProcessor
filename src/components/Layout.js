@@ -18,7 +18,7 @@ import {
   CpuChipIcon, // Ícono para el logo de SAGE
   EnvelopeIcon, // Ícono para configuraciones de correo
   Cog8ToothIcon, // Ícono para maestros
-  PencilSquareIcon, // Ícono para YAML Editor,
+
   ServerIcon, // Ícono para DuckDB Swarm
   DatabaseIcon, // Ícono para bases de datos
 } from '@heroicons/react/24/outline'
@@ -28,11 +28,6 @@ import { useRouter } from 'next/router'
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'YAML Studio', href: '/studio', icon: CodeBracketSquareIcon },
-  { 
-    name: 'YAML Editor', 
-    href: '/yaml-editor',  // Página de redireccionamiento
-    icon: PencilSquareIcon, 
-  },
   { name: 'Casillas de Datos', href: '/admin/data-boxes', icon: InboxStackIcon },
   { name: 'Portales', href: '/admin/portales', icon: WindowIcon },
   { name: 'Control de Acceso', href: '/access', icon: ShieldCheckIcon },

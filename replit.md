@@ -111,12 +111,10 @@ SAGE (Sistema Avanzado para la Gestión de Configuraciones Organizacionales) is 
 
 ## Changelog
 
-- June 25, 2025: YAML Editor Complete - Major breakthrough achieved
-  - Fixed parser indentation issues - now handles flexible indentation correctly
-  - Added complete validation system: field_validation, row_validation, catalog_validation, package_validation
-  - Parser successfully detects 24+ fields from complex YAML files
-  - All validation types include name, description, rule (pandas expressions), and severity
-  - Visual interface for creating and editing all validation types according to SAGE specification
+- June 25, 2025: YAML Editor Removed
+  - Removed standalone YAML Editor component at user request
+  - Cleaned up navigation menu - removed YAML Editor link and icon imports
+  - YAML Studio remains as the primary YAML configuration tool
 - June 25, 2025: Initial setup
 
 ## User Preferences
