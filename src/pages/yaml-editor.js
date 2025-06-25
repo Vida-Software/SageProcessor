@@ -230,11 +230,25 @@ export default function YAMLEditorPage() {
         };
       }
 
-      // Process catalogs using parsed structure
-      if (parsedYaml.catalogs && Array.isArray(parsedYaml.catalogs)) {
-        console.log(`📂 Procesando ${parsedYaml.catalogs.length} catálogos...`);
+      // Process catalogs - handle both array and object formats
+      if (parsedYaml.catalogs) {
+        let catalogsToProcess = [];
         
-        parsedYaml.catalogs.forEach((catalog, catalogIndex) => {
+        if (Array.isArray(parsedYaml.catalogs)) {
+          // Array format: [catalog1, catalog2, ...]
+          catalogsToProcess = parsedYaml.catalogs;
+          console.log(`📂 Procesando ${catalogsToProcess.length} catálogos (formato array)...`);
+        } else if (typeof parsedYaml.catalogs === 'object') {
+          // Object format: { "productos": {...}, "clientes": {...} }
+          catalogsToProcess = Object.entries(parsedYaml.catalogs).map(([key, catalog]) => ({
+            ...catalog,
+            name: catalog.name || key, // Use key as fallback name
+            _catalogKey: key
+          }));
+          console.log(`📂 Procesando ${catalogsToProcess.length} catálogos (formato objeto)...`);
+        }
+        
+        catalogsToProcess.forEach((catalog, catalogIndex) => {
           console.log(`📁 Catálogo ${catalogIndex + 1}:`, catalog.name || catalog.catalog_name || 'Sin nombre');
           
           const catalogData = {
@@ -258,7 +272,7 @@ export default function YAMLEditorPage() {
                 type: field.type || 'texto',
                 required: field.required !== false,
                 description: field.description || "",
-                validations: []
+                validations: field.validation_rules || []
               };
 
               catalogData.fields.push(fieldData);
