@@ -320,7 +320,7 @@ const YAMLEditorPage = () => {
             }
 
             // Propiedades del campo (nivel 6 espacios)
-            if (currentField && currentField.name !== '' && indent === 6 && trimmed.includes(':') && !trimmed.startsWith('- ')) {
+            if (currentField && indent === 6 && trimmed.includes(':') && !trimmed.startsWith('- ')) {
               const colonIndex = trimmed.indexOf(':');
               const key = trimmed.substring(0, colonIndex).trim();
               const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
