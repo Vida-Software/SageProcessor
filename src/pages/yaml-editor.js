@@ -271,11 +271,12 @@ const YAMLEditorPage = () => {
               continue;
             }
 
-            // Nuevo campo (nivel 4, con guión)
+            // Nuevo campo (nivel 4, con guión seguido de name:)
             if (indent === 4 && trimmed.startsWith('- ')) {
-              const fieldData = trimmed.substring(2).trim();
-              if (fieldData.startsWith('name:')) {
-                const fieldName = fieldData.substring(5).trim().replace(/^["']|["']$/g, '');
+              const fieldLine = trimmed.substring(2).trim();
+              // Puede ser "- name: NombreCampo" o solo "- name: NombreCampo"
+              if (fieldLine.startsWith('name:')) {
+                const fieldName = fieldLine.substring(5).trim().replace(/^["']|["']$/g, '');
                 currentField = {
                   name: fieldName,
                   type: 'texto',
@@ -290,37 +291,65 @@ const YAMLEditorPage = () => {
                 inRowValidation = false;
                 inCatalogValidation = false;
                 console.log(`Nuevo campo encontrado: ${fieldName}`);
+              } else {
+                // Caso donde el guión está solo y name: viene en la siguiente línea
+                // Crear un campo temporal para la siguiente línea
+                currentField = {
+                  name: '',
+                  type: 'texto',
+                  required: false,
+                  unique: false,
+                  description: '',
+                  defaultValue: '',
+                  validation_rules: []
+                };
+                currentCatalog.fields.push(currentField);
+                inFieldValidationRules = false;
+                inRowValidation = false;
+                inCatalogValidation = false;
               }
               continue;
             }
 
+            // Propiedades del campo que está en proceso (línea después del guión)
+            if (currentField && currentField.name === '' && indent === 6 && trimmed.startsWith('name:')) {
+              const fieldName = trimmed.substring(5).trim().replace(/^["']|["']$/g, '');
+              currentField.name = fieldName;
+              console.log(`Campo asignado: ${fieldName}`);
+              continue;
+            }
+
             // Propiedades del campo (nivel 6 espacios)
-            if (currentField && indent === 6 && trimmed.includes(':') && !trimmed.startsWith('- ')) {
+            if (currentField && currentField.name !== '' && indent === 6 && trimmed.includes(':') && !trimmed.startsWith('- ')) {
               const colonIndex = trimmed.indexOf(':');
               const key = trimmed.substring(0, colonIndex).trim();
               const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
 
               if (key === 'type') {
                 currentField.type = value;
+                console.log(`Campo ${currentField.name}: tipo = ${value}`);
               } else if (key === 'required') {
                 currentField.required = value === 'true';
+                console.log(`Campo ${currentField.name}: required = ${value}`);
               } else if (key === 'unique') {
                 currentField.unique = value === 'true';
+                console.log(`Campo ${currentField.name}: unique = ${value}`);
               } else if (key === 'description') {
                 currentField.description = value;
               } else if (key === 'defaultValue') {
                 currentField.defaultValue = value;
               } else if (key === 'validation_rules') {
                 inFieldValidationRules = true;
+                console.log(`Campo ${currentField.name}: iniciando validation_rules`);
               }
               continue;
             }
 
             // Validaciones de campo (nivel 6, con guión)
             if (currentField && inFieldValidationRules && indent === 6 && trimmed.startsWith('- ')) {
-              const validationData = trimmed.substring(2).trim();
-              if (validationData.startsWith('name:')) {
-                const validationName = validationData.substring(5).trim().replace(/^["']|["']$/g, '');
+              const validationLine = trimmed.substring(2).trim();
+              if (validationLine.startsWith('name:')) {
+                const validationName = validationLine.substring(5).trim().replace(/^["']|["']$/g, '');
                 currentValidation = {
                   name: validationName,
                   description: '',
@@ -328,8 +357,25 @@ const YAMLEditorPage = () => {
                   severity: 'error'
                 };
                 currentField.validation_rules.push(currentValidation);
-                console.log(`Nueva validación de campo: ${validationName}`);
+                console.log(`Nueva validación de campo ${currentField.name}: ${validationName}`);
+              } else {
+                // Crear validación temporal si el guión está solo
+                currentValidation = {
+                  name: '',
+                  description: '',
+                  rule: '',
+                  severity: 'error'
+                };
+                currentField.validation_rules.push(currentValidation);
               }
+              continue;
+            }
+
+            // Propiedades de validación que están después del guión
+            if (currentValidation && currentValidation.name === '' && inFieldValidationRules && indent === 8 && trimmed.startsWith('name:')) {
+              const validationName = trimmed.substring(5).trim().replace(/^["']|["']$/g, '');
+              currentValidation.name = validationName;
+              console.log(`Validación asignada: ${validationName}`);
               continue;
             }
 
