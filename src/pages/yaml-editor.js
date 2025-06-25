@@ -164,6 +164,7 @@ const YAMLEditorPage = () => {
 
         let currentSection = null;
         let currentCatalog = null;
+        let currentPackage = null;
         let currentField = null;
         let currentValidation = null;
         let inFieldValidationRules = false;
@@ -421,21 +422,20 @@ const YAMLEditorPage = () => {
               } else if (keyTrimmed === 'catalogs') {
                 currentContext = 'package_catalogs';
               } else if (keyTrimmed === 'package_validation') {
-                currentContext = 'package_validation';
-                validationLevel = 'package';
-              } else if (keyTrimmed === 'type' && currentContext === 'package_file_format') {
+                // Esperamos validaciones de paquete
+              } else if (keyTrimmed === 'type') {
                 currentPackage.file_format.type = value;
               }
             }
 
             // Catálogos del paquete (array)
-            else if (currentContext === 'package_catalogs' && trimmed.startsWith('- ')) {
+            else if (indent === 4 && trimmed.startsWith('- ')) {
               const catalogName = trimmed.substring(2).trim().replace(/^["']|["']$/g, '');
               currentPackage.catalogs.push(catalogName);
             }
 
-            // Validaciones de paquete
-            else if (currentContext === 'package_validation' && trimmed.startsWith('- ')) {
+            // Validaciones de paquete (nivel 4, con guión)
+            else if (indent === 4 && trimmed.startsWith('- ')) {
               const validationData = trimmed.substring(2).trim();
               if (validationData.includes(':')) {
                 const [key, ...valueParts] = validationData.split(':');
@@ -443,30 +443,30 @@ const YAMLEditorPage = () => {
                 value = value.replace(/^["']|["']$/g, '');
                 
                 if (key.trim() === 'name') {
-                  currentValidationRule = {
+                  currentValidation = {
                     name: value,
                     description: '',
                     rule: '',
                     severity: 'error'
                   };
-                  currentPackage.package_validation.push(currentValidationRule);
+                  currentPackage.package_validation.push(currentValidation);
                 }
               }
             }
 
             // Propiedades de validaciones de paquete
-            else if (currentValidationRule && currentContext === 'package_validation' && indent > 8 && trimmed.includes(':')) {
+            else if (currentValidation && currentContext === 'package_validation' && indent > 8 && trimmed.includes(':')) {
               const [key, ...valueParts] = trimmed.split(':');
               const keyTrimmed = key.trim();
               let value = valueParts.join(':').trim();
               value = value.replace(/^["']|["']$/g, '');
 
               if (keyTrimmed === 'description') {
-                currentValidationRule.description = value;
+                currentValidation.description = value;
               } else if (keyTrimmed === 'rule') {
-                currentValidationRule.rule = value;
+                currentValidation.rule = value;
               } else if (keyTrimmed === 'severity') {
-                currentValidationRule.severity = value;
+                currentValidation.severity = value;
               }
             }
           }
