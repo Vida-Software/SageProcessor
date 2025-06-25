@@ -140,10 +140,21 @@ const YAMLEditorPage = () => {
       event.target.value = '';
     };
 
-    // Parser YAML mejorado - menos estricto con indentación
+    // Parser YAML usando función nativa del navegador
     const parseYamlContent = (yamlContent) => {
       try {
-        console.log('Iniciando parser mejorado...');
+        console.log('Iniciando parser YAML nativo...');
+        
+        // Intentar parsear usando función YAML simple
+        const parsedData = parseSimpleYAML(yamlContent);
+        
+        if (parsedData) {
+          console.log('YAML parseado exitosamente:', parsedData);
+          return convertParsedYamlToConfig(parsedData);
+        }
+        
+        // Fallback al parser manual si falla
+        console.log('Fallback a parser manual...');
         const lines = yamlContent.split('\n');
         const result = {
           sage_yaml: {
@@ -591,6 +602,173 @@ const YAMLEditorPage = () => {
         return result;
       } catch (error) {
         console.error('Error parsing YAML:', error);
+        return null;
+      }
+    };
+
+    // Parser YAML simple usando regex y estructuras
+    const parseSimpleYAML = (yamlContent) => {
+      try {
+        // Convertir YAML a objeto JavaScript usando una técnica simple
+        const lines = yamlContent.split('\n');
+        const result = {};
+        let currentPath = [];
+        let currentObject = result;
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const trimmed = line.trim();
+          
+          if (!trimmed || trimmed.startsWith('#')) continue;
+          
+          const indent = line.search(/\S/);
+          const level = Math.floor(indent / 2);
+          
+          if (trimmed.endsWith(':') && !trimmed.includes(' - ')) {
+            // Es una clave de objeto
+            const key = trimmed.slice(0, -1);
+            
+            // Ajustar el path según el nivel de indentación
+            currentPath = currentPath.slice(0, level);
+            currentPath.push(key);
+            
+            // Navegar al objeto correcto
+            currentObject = result;
+            for (let j = 0; j < currentPath.length - 1; j++) {
+              if (!currentObject[currentPath[j]]) {
+                currentObject[currentPath[j]] = {};
+              }
+              currentObject = currentObject[currentPath[j]];
+            }
+            
+            if (!currentObject[key]) {
+              currentObject[key] = {};
+            }
+          } else if (trimmed.startsWith('- ')) {
+            // Es un elemento de array
+            const parentKey = currentPath[currentPath.length - 1];
+            if (parentKey) {
+              // Navegar al objeto padre
+              let parentObject = result;
+              for (let j = 0; j < currentPath.length - 1; j++) {
+                parentObject = parentObject[currentPath[j]];
+              }
+              
+              if (!parentObject[parentKey]) {
+                parentObject[parentKey] = [];
+              }
+              
+              if (Array.isArray(parentObject[parentKey])) {
+                const itemValue = trimmed.substring(2).trim();
+                if (itemValue.includes(':')) {
+                  // Es un objeto dentro del array
+                  const itemObj = {};
+                  const [itemKey, itemVal] = itemValue.split(':').map(s => s.trim());
+                  itemObj[itemKey] = itemVal.replace(/^["']|["']$/g, '');
+                  parentObject[parentKey].push(itemObj);
+                } else {
+                  // Es un valor simple
+                  parentObject[parentKey].push(itemValue.replace(/^["']|["']$/g, ''));
+                }
+              }
+            }
+          } else if (trimmed.includes(':')) {
+            // Es una propiedad clave: valor
+            const [key, ...valueParts] = trimmed.split(':');
+            const value = valueParts.join(':').trim().replace(/^["']|["']$/g, '');
+            
+            // Navegar al objeto correcto según el nivel
+            currentPath = currentPath.slice(0, level);
+            currentObject = result;
+            for (let j = 0; j < currentPath.length; j++) {
+              if (!currentObject[currentPath[j]]) {
+                currentObject[currentPath[j]] = {};
+              }
+              currentObject = currentObject[currentPath[j]];
+            }
+            
+            currentObject[key.trim()] = value;
+          }
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('Error en parseSimpleYAML:', error);
+        return null;
+      }
+    };
+
+    // Convertir datos parseados a configuración del editor
+    const convertParsedYamlToConfig = (parsedData) => {
+      try {
+        const config = {
+          sage_yaml: parsedData.sage_yaml || {
+            name: "Configuración SAGE",
+            description: "",
+            version: "1.0.0",
+            author: "SAGE",
+            comments: ""
+          },
+          catalogs: [],
+          package: {
+            name: "Paquete Principal",
+            description: "",
+            file_format: { type: "ZIP" },
+            catalogs: [],
+            package_validation: []
+          }
+        };
+
+        // Procesar catálogos
+        if (parsedData.catalogs) {
+          Object.entries(parsedData.catalogs).forEach(([catalogId, catalogData]) => {
+            const catalog = {
+              name: catalogData.name || catalogId,
+              description: catalogData.description || "",
+              filename: catalogData.filename || "",
+              file_format: catalogData.file_format || { type: 'CSV', delimiter: ',', header: true },
+              fields: [],
+              row_validation: catalogData.row_validation || [],
+              catalog_validation: catalogData.catalog_validation || []
+            };
+
+            // Procesar campos
+            if (catalogData.fields && Array.isArray(catalogData.fields)) {
+              catalog.fields = catalogData.fields.map(field => ({
+                name: field.name || '',
+                type: field.type || 'texto',
+                required: field.required === true || field.required === 'true',
+                unique: field.unique === true || field.unique === 'true',
+                validation_rules: field.validation_rules || []
+              }));
+            }
+
+            config.catalogs.push(catalog);
+          });
+        }
+
+        // Procesar paquete
+        if (parsedData.packages || parsedData.package) {
+          const packageData = parsedData.packages || parsedData.package;
+          if (typeof packageData === 'object') {
+            const firstPackageKey = Object.keys(packageData)[0];
+            if (firstPackageKey) {
+              const packageInfo = packageData[firstPackageKey];
+              config.package = {
+                name: packageInfo.name || firstPackageKey,
+                description: packageInfo.description || "",
+                file_format: packageInfo.file_format || { type: "ZIP" },
+                catalogs: packageInfo.catalogs || [],
+                package_validation: packageInfo.package_validation || []
+              };
+            }
+          }
+        }
+
+        console.log('Configuración convertida:', config);
+        return config;
+      } catch (error) {
+        console.error('Error convirtiendo configuración:', error);
         return null;
       }
     };
