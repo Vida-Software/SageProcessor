@@ -11,27 +11,232 @@ const YAMLEditorPage = () => {
   const [activeEditorTab, setActiveEditorTab] = useState(0);
 
   const ManualYAMLEditor = () => {
+    // Estados para el YAML config
+    const [yamlConfig, setYamlConfig] = useState({
+      sage_yaml: {
+        name: "Configuración SAGE",
+        description: "Especificación YAML para validación de datos",
+        version: "1.0.0",
+        author: "SAGE",
+        comments: ""
+      },
+      catalogs: [],
+      package: {
+        name: "Paquete Principal",
+        description: "Configuración de validación para archivos de datos",
+        catalogs: [],
+        file_format: { type: "ZIP" }
+      }
+    });
+
+    const [activeSection, setActiveSection] = useState('general');
+    const [showYamlPreview, setShowYamlPreview] = useState(false);
+
+    // Tipos de datos disponibles
+    const dataTypes = ['texto', 'decimal', 'entero', 'fecha', 'booleano'];
+    const fileTypes = ['CSV', 'EXCEL', 'ZIP'];
+    const severityTypes = ['error', 'warning'];
+
+    // Funciones para manejar cambios en sage_yaml
+    const handleSageYamlChange = (key, value) => {
+      setYamlConfig(prev => ({
+        ...prev,
+        sage_yaml: {
+          ...prev.sage_yaml,
+          [key]: value
+        }
+      }));
+    };
+
+    // Funciones para manejar catálogos
+    const addCatalog = () => {
+      const newCatalog = {
+        name: `Catálogo ${yamlConfig.catalogs.length + 1}`,
+        description: "",
+        filename: "",
+        file_format: { type: "CSV", delimiter: ",", header: true },
+        fields: []
+      };
+      setYamlConfig(prev => ({
+        ...prev,
+        catalogs: [...prev.catalogs, newCatalog]
+      }));
+    };
+
+    const updateCatalog = (index, updatedCatalog) => {
+      setYamlConfig(prev => ({
+        ...prev,
+        catalogs: prev.catalogs.map((cat, i) => i === index ? updatedCatalog : cat)
+      }));
+    };
+
+    const deleteCatalog = (index) => {
+      const catalogName = yamlConfig.catalogs[index].name;
+      setYamlConfig(prev => ({
+        ...prev,
+        catalogs: prev.catalogs.filter((_, i) => i !== index),
+        package: {
+          ...prev.package,
+          catalogs: prev.package.catalogs.filter(cat => cat !== catalogName)
+        }
+      }));
+    };
+
+    // Función para generar YAML
+    const generateYamlOutput = () => {
+      const yamlObj = {
+        sage_yaml: yamlConfig.sage_yaml,
+        catalogs: {},
+        packages: {
+          [yamlConfig.package.name.toLowerCase().replace(/\s+/g, '_')]: yamlConfig.package
+        }
+      };
+
+      // Convertir array de catálogos a objeto
+      yamlConfig.catalogs.forEach(catalog => {
+        const catalogKey = catalog.name.toLowerCase().replace(/\s+/g, '_');
+        yamlObj.catalogs[catalogKey] = catalog;
+      });
+
+      return yamlObj;
+    };
+
+    // Función para descargar YAML
+    const downloadYaml = () => {
+      const yamlData = generateYamlOutput();
+      const yamlString = generateYamlString(yamlData);
+      const element = document.createElement('a');
+      const file = new Blob([yamlString], { type: 'text/yaml' });
+      element.href = URL.createObjectURL(file);
+      element.download = `${yamlConfig.sage_yaml.name || 'config'}.yaml`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    };
+
+    // Función simple para generar YAML string
+    const generateYamlString = (obj, indent = 0) => {
+      const spaces = '  '.repeat(indent);
+      let result = '';
+      
+      Object.entries(obj).forEach(([key, value]) => {
+        if (value === '' || (typeof value === 'object' && value !== null && Object.keys(value).length === 0 && !Array.isArray(value))) {
+          return;
+        }
+        
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+          result += `${spaces}${key}:\n`;
+          result += generateYamlString(value, indent + 1);
+        } else if (Array.isArray(value)) {
+          if (value.length > 0) {
+            result += `${spaces}${key}:\n`;
+            value.forEach(item => {
+              if (typeof item === 'object') {
+                result += `${spaces}  -\n`;
+                Object.entries(item).forEach(([itemKey, itemValue]) => {
+                  const valueStr = typeof itemValue === 'string' ? `"${itemValue}"` : String(itemValue);
+                  result += `${spaces}    ${itemKey}: ${valueStr}\n`;
+                });
+              } else {
+                result += `${spaces}  - ${item}\n`;
+              }
+            });
+          }
+        } else if (value !== '') {
+          const valueStr = typeof value === 'string' ? `"${value}"` : String(value);
+          result += `${spaces}${key}: ${valueStr}\n`;
+        }
+      });
+      
+      return result;
+    };
+
     return (
-      <div className="text-center py-8">
-        <ExclamationTriangleIcon className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Editor Manual en Desarrollo</h3>
-        <p className="text-gray-600 mb-6 max-w-md mx-auto">
-          El editor visual manual con formularios estructurados está disponible como aplicación independiente 
-          con componentes TypeScript avanzados.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button
-            onClick={() => setActiveEditorTab(0)}
-            variant="primary"
-          >
-            Usar Generador IA
-          </Button>
-          <Button
-            onClick={() => router.push('/studio')}
-            variant="secondary"
-          >
-            Ir a YAML Studio
-          </Button>
+      <div className="space-y-6">
+        {/* Header con controles */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">Editor Visual YAML</h3>
+            <p className="text-sm text-gray-600">Crea tu configuración YAML paso a paso</p>
+          </div>
+          <div className="flex space-x-3">
+            <Button
+              onClick={() => setShowYamlPreview(!showYamlPreview)}
+              variant="secondary"
+              className="text-sm"
+            >
+              {showYamlPreview ? 'Ocultar Vista Previa' : 'Ver YAML'}
+            </Button>
+            <Button
+              onClick={downloadYaml}
+              variant="primary"
+              className="text-sm"
+            >
+              Descargar YAML
+            </Button>
+          </div>
+        </div>
+
+        {/* Navegación de secciones */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            {['general', 'catalogs', 'package'].map((section) => (
+              <button
+                key={section}
+                onClick={() => setActiveSection(section)}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeSection === section
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {section === 'general' && 'Información General'}
+                {section === 'catalogs' && `Catálogos (${yamlConfig.catalogs.length})`}
+                {section === 'package' && 'Paquete'}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Vista previa YAML */}
+        {showYamlPreview && (
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h4 className="font-medium text-gray-900 mb-3">Vista Previa YAML</h4>
+            <pre className="bg-white p-4 rounded border text-sm overflow-x-auto">
+              <code>{generateYamlString(generateYamlOutput())}</code>
+            </pre>
+          </div>
+        )}
+
+        {/* Contenido de las secciones */}
+        <div className="bg-white rounded-lg border p-6">
+          {activeSection === 'general' && (
+            <GeneralYamlSection 
+              data={yamlConfig.sage_yaml}
+              onChange={handleSageYamlChange}
+            />
+          )}
+
+          {activeSection === 'catalogs' && (
+            <CatalogsYamlSection 
+              catalogs={yamlConfig.catalogs}
+              onAdd={addCatalog}
+              onUpdate={updateCatalog}
+              onDelete={deleteCatalog}
+              dataTypes={dataTypes}
+              fileTypes={fileTypes}
+              severityTypes={severityTypes}
+            />
+          )}
+
+          {activeSection === 'package' && (
+            <PackageYamlSection 
+              packageData={yamlConfig.package}
+              catalogs={yamlConfig.catalogs}
+              onChange={(updatedPackage) => setYamlConfig(prev => ({ ...prev, package: updatedPackage }))}
+              fileTypes={fileTypes}
+            />
+          )}
         </div>
       </div>
     );
@@ -248,6 +453,475 @@ const YAMLEditorPage = () => {
 };
 
 
+
+// Componente para la sección de información general
+const GeneralYamlSection = ({ data, onChange }) => (
+  <div className="space-y-6">
+    <div>
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Información General (sage_yaml)</h3>
+      <p className="text-sm text-gray-600 mb-6">Información básica sobre tu configuración YAML</p>
+    </div>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Nombre *
+        </label>
+        <input
+          type="text"
+          value={data.name}
+          onChange={(e) => onChange('name', e.target.value)}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Nombre descriptivo del YAML"
+        />
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Versión *
+        </label>
+        <input
+          type="text"
+          value={data.version}
+          onChange={(e) => onChange('version', e.target.value)}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="1.0.0"
+        />
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Autor *
+        </label>
+        <input
+          type="text"
+          value={data.author}
+          onChange={(e) => onChange('author', e.target.value)}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Nombre del autor"
+        />
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Comentarios
+        </label>
+        <input
+          type="text"
+          value={data.comments || ''}
+          onChange={(e) => onChange('comments', e.target.value)}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Comentarios adicionales (opcional)"
+        />
+      </div>
+      
+      <div className="md:col-span-2">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Descripción *
+        </label>
+        <textarea
+          value={data.description}
+          onChange={(e) => onChange('description', e.target.value)}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          rows="3"
+          placeholder="Descripción del propósito del YAML"
+        />
+      </div>
+    </div>
+  </div>
+);
+
+// Componente para la sección de catálogos
+const CatalogsYamlSection = ({ catalogs, onAdd, onUpdate, onDelete, dataTypes, fileTypes, severityTypes }) => (
+  <div className="space-y-6">
+    <div className="flex justify-between items-center">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">Catálogos</h3>
+        <p className="text-sm text-gray-600 mt-1">Define la estructura y validaciones para tus archivos de datos</p>
+      </div>
+      <Button onClick={onAdd} variant="primary" className="text-sm">
+        + Agregar Catálogo
+      </Button>
+    </div>
+    
+    {catalogs.length === 0 ? (
+      <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+        <p className="text-gray-500 mb-4">No hay catálogos definidos</p>
+        <Button onClick={onAdd} variant="primary">
+          Crear primer catálogo
+        </Button>
+      </div>
+    ) : (
+      <div className="space-y-4">
+        {catalogs.map((catalog, index) => (
+          <YamlCatalogEditor
+            key={index}
+            catalog={catalog}
+            index={index}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+            dataTypes={dataTypes}
+            fileTypes={fileTypes}
+            severityTypes={severityTypes}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+// Componente editor individual de catálogo
+const YamlCatalogEditor = ({ catalog, index, onUpdate, onDelete, dataTypes, fileTypes, severityTypes }) => {
+  const [expanded, setExpanded] = useState(true);
+  
+  const updateField = (field, value) => {
+    onUpdate(index, { ...catalog, [field]: value });
+  };
+  
+  const updateFileFormat = (field, value) => {
+    onUpdate(index, {
+      ...catalog,
+      file_format: { ...catalog.file_format, [field]: value }
+    });
+  };
+  
+  const addField = () => {
+    const newField = {
+      name: '',
+      type: 'texto',
+      required: false,
+      unique: false
+    };
+    onUpdate(index, {
+      ...catalog,
+      fields: [...catalog.fields, newField]
+    });
+  };
+  
+  const updateFieldAt = (fieldIndex, field, value) => {
+    const updatedFields = catalog.fields.map((f, i) => 
+      i === fieldIndex ? { ...f, [field]: value } : f
+    );
+    onUpdate(index, { ...catalog, fields: updatedFields });
+  };
+  
+  const removeField = (fieldIndex) => {
+    onUpdate(index, {
+      ...catalog,
+      fields: catalog.fields.filter((_, i) => i !== fieldIndex)
+    });
+  };
+
+  return (
+    <div className="border border-gray-200 rounded-lg">
+      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              {expanded ? '▼' : '▶'}
+            </button>
+            <h4 className="font-medium text-gray-900">
+              {catalog.name || `Catálogo ${index + 1}`}
+            </h4>
+          </div>
+          <button
+            onClick={() => onDelete(index)}
+            className="text-red-600 hover:text-red-800 text-sm"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+      
+      {expanded && (
+        <div className="p-6 space-y-6">
+          {/* Información básica */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre del Catálogo *
+              </label>
+              <input
+                type="text"
+                value={catalog.name}
+                onChange={(e) => updateField('name', e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Nombre del catálogo"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre del Archivo
+              </label>
+              <input
+                type="text"
+                value={catalog.filename || ''}
+                onChange={(e) => updateField('filename', e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="archivo.csv"
+              />
+            </div>
+            
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Descripción
+              </label>
+              <textarea
+                value={catalog.description || ''}
+                onChange={(e) => updateField('description', e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows="2"
+                placeholder="Descripción del catálogo"
+              />
+            </div>
+          </div>
+          
+          {/* Formato de archivo */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <h5 className="font-medium text-gray-900 mb-4">Formato de Archivo</h5>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo
+                </label>
+                <select
+                  value={catalog.file_format?.type || 'CSV'}
+                  onChange={(e) => updateFileFormat('type', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {fileTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {catalog.file_format?.type === 'CSV' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Delimitador
+                    </label>
+                    <select
+                      value={catalog.file_format?.delimiter || ','}
+                      onChange={(e) => updateFileFormat('delimiter', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value=",">Coma (,)</option>
+                      <option value=";">Punto y coma (;)</option>
+                      <option value="|">Pipe (|)</option>
+                      <option value="\t">Tab</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Encabezados
+                    </label>
+                    <select
+                      value={catalog.file_format?.header ? 'true' : 'false'}
+                      onChange={(e) => updateFileFormat('header', e.target.value === 'true')}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="true">Sí</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+          
+          {/* Campos */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h5 className="font-medium text-gray-900">Campos</h5>
+              <Button onClick={addField} variant="secondary" className="text-sm">
+                + Agregar Campo
+              </Button>
+            </div>
+            
+            {catalog.fields.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                No hay campos definidos. Agrega uno para comenzar.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {catalog.fields.map((field, fieldIndex) => (
+                  <YamlFieldEditor
+                    key={fieldIndex}
+                    field={field}
+                    fieldIndex={fieldIndex}
+                    onUpdate={updateFieldAt}
+                    onRemove={removeField}
+                    dataTypes={dataTypes}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente editor de campo
+const YamlFieldEditor = ({ field, fieldIndex, onUpdate, onRemove, dataTypes }) => (
+  <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end bg-gray-50 p-3 rounded-md">
+    <div>
+      <label className="block text-xs font-medium text-gray-700 mb-1">
+        Nombre *
+      </label>
+      <input
+        type="text"
+        value={field.name || ''}
+        onChange={(e) => onUpdate(fieldIndex, 'name', e.target.value)}
+        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+        placeholder="nombre_campo"
+      />
+    </div>
+    
+    <div>
+      <label className="block text-xs font-medium text-gray-700 mb-1">
+        Tipo *
+      </label>
+      <select
+        value={field.type || 'texto'}
+        onChange={(e) => onUpdate(fieldIndex, 'type', e.target.value)}
+        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        {dataTypes.map(type => (
+          <option key={type} value={type}>{type}</option>
+        ))}
+      </select>
+    </div>
+    
+    <div className="flex items-center">
+      <label className="flex items-center text-sm">
+        <input
+          type="checkbox"
+          checked={field.required || false}
+          onChange={(e) => onUpdate(fieldIndex, 'required', e.target.checked)}
+          className="mr-2"
+        />
+        Requerido
+      </label>
+    </div>
+    
+    <div className="flex items-center">
+      <label className="flex items-center text-sm">
+        <input
+          type="checkbox"
+          checked={field.unique || false}
+          onChange={(e) => onUpdate(fieldIndex, 'unique', e.target.checked)}
+          className="mr-2"
+        />
+        Único
+      </label>
+    </div>
+    
+    <div className="md:col-span-2 flex justify-end">
+      <button
+        onClick={() => onRemove(fieldIndex)}
+        className="text-red-600 hover:text-red-800 text-sm"
+      >
+        Eliminar
+      </button>
+    </div>
+  </div>
+);
+
+// Componente para la sección de paquete
+const PackageYamlSection = ({ packageData, catalogs, onChange, fileTypes }) => (
+  <div className="space-y-6">
+    <div>
+      <h3 className="text-lg font-medium text-gray-900">Configuración del Paquete</h3>
+      <p className="text-sm text-gray-600 mt-1">Define cómo se agrupan y validan los catálogos</p>
+    </div>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Nombre del Paquete *
+        </label>
+        <input
+          type="text"
+          value={packageData.name}
+          onChange={(e) => onChange({ ...packageData, name: e.target.value })}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Nombre del paquete"
+        />
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Tipo de Archivo
+        </label>
+        <select
+          value={packageData.file_format?.type || 'ZIP'}
+          onChange={(e) => onChange({ 
+            ...packageData, 
+            file_format: { ...packageData.file_format, type: e.target.value }
+          })}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {fileTypes.map(type => (
+            <option key={type} value={type}>{type}</option>
+          ))}
+        </select>
+      </div>
+      
+      <div className="md:col-span-2">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Descripción
+        </label>
+        <textarea
+          value={packageData.description || ''}
+          onChange={(e) => onChange({ ...packageData, description: e.target.value })}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          rows="3"
+          placeholder="Descripción del paquete"
+        />
+      </div>
+    </div>
+    
+    {/* Selección de catálogos */}
+    <div className="border border-gray-200 rounded-lg p-4">
+      <h4 className="font-medium text-gray-900 mb-4">Catálogos Incluidos</h4>
+      {catalogs.length === 0 ? (
+        <p className="text-gray-500 text-sm">No hay catálogos disponibles. Crea catálogos primero.</p>
+      ) : (
+        <div className="space-y-2">
+          {catalogs.map((catalog, index) => {
+            const isSelected = packageData.catalogs.includes(catalog.name);
+            return (
+              <label key={index} className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={(e) => {
+                    const newCatalogs = e.target.checked
+                      ? [...packageData.catalogs, catalog.name]
+                      : packageData.catalogs.filter(name => name !== catalog.name);
+                    onChange({ ...packageData, catalogs: newCatalogs });
+                  }}
+                  className="mr-3"
+                />
+                <span className="text-sm">
+                  {catalog.name} ({catalog.filename || 'sin archivo'})
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </div>
+);
 
 YAMLEditorPage.getLayout = function getLayout(page) {
   return <Layout>{page}</Layout>;
