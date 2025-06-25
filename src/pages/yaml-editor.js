@@ -277,12 +277,38 @@ const YAMLEditorPage = () => {
               continue;
             }
 
-            // Nuevo campo (cualquier nivel con guión dentro de fields)
+            // Nuevo campo o validación (cualquier nivel con guión dentro de catalogs)
             if (currentCatalog && trimmed.startsWith('- ') && currentSection === 'catalogs') {
-              console.log(`🔍 DEBUGGING: Línea nivel 4 con guión: "${line}"`);
-              console.log(`🔍 Catálogo actual: ${currentCatalog ? currentCatalog.name : 'NINGUNO'}`);
+              console.log(`🔍 DEBUGGING: Línea nivel con guión: "${line}"`);
+              console.log(`🔍 Estado: rowValidation=${inRowValidation}, catalogValidation=${inCatalogValidation}, fieldValidation=${inFieldValidationRules}`);
               
               const fieldLine = trimmed.substring(2).trim();
+              
+              // Si estamos en row_validation, agregar validación de fila
+              if (inRowValidation) {
+                const validation = { name: '', description: '', rule: '', severity: 'error' };
+                if (fieldLine.includes('name:')) {
+                  const nameMatch = fieldLine.match(/name:\s*["']?([^"']+)["']?/);
+                  if (nameMatch) validation.name = nameMatch[1];
+                }
+                currentCatalog.row_validation.push(validation);
+                console.log(`✅ Validación de fila agregada: ${validation.name}`);
+                continue;
+              }
+              
+              // Si estamos en catalog_validation, agregar validación de catálogo
+              if (inCatalogValidation) {
+                const validation = { name: '', description: '', rule: '', severity: 'error' };
+                if (fieldLine.includes('name:')) {
+                  const nameMatch = fieldLine.match(/name:\s*["']?([^"']+)["']?/);
+                  if (nameMatch) validation.name = nameMatch[1];
+                }
+                currentCatalog.catalog_validation.push(validation);
+                console.log(`✅ Validación de catálogo agregada: ${validation.name}`);
+                continue;
+              }
+              
+              // Si no estamos en validaciones, es un campo normal
               console.log(`🔍 Contenido después del guión: "${fieldLine}"`);
               
               // Puede ser "- name: NombreCampo" o solo "- name: NombreCampo"
@@ -1247,6 +1273,224 @@ const YamlCatalogEditor = ({ catalog, index, onUpdate, onDelete, dataTypes, file
               </div>
             )}
           </div>
+          
+          {/* Validaciones de Fila */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h5 className="font-medium text-gray-900">Validaciones de Fila (Opcional)</h5>
+              <Button 
+                onClick={() => {
+                  const newValidation = { name: '', description: '', rule: '', severity: 'error' };
+                  onUpdate(index, {
+                    ...catalog,
+                    row_validation: [...(catalog.row_validation || []), newValidation]
+                  });
+                }} 
+                variant="secondary" 
+                className="text-sm"
+              >
+                + Agregar Validación
+              </Button>
+            </div>
+            
+            {(!catalog.row_validation || catalog.row_validation.length === 0) ? (
+              <div className="text-center py-4 text-gray-500">
+                No hay validaciones de fila definidas.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {catalog.row_validation.map((validation, validationIndex) => (
+                  <div key={validationIndex} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-md">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                      <input
+                        type="text"
+                        value={validation.name || ''}
+                        onChange={(e) => {
+                          const updatedValidations = catalog.row_validation.map((v, i) => 
+                            i === validationIndex ? { ...v, name: e.target.value } : v
+                          );
+                          onUpdate(index, { ...catalog, row_validation: updatedValidations });
+                        }}
+                        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                        placeholder="Ej: Total válido"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                      <input
+                        type="text"
+                        value={validation.description || ''}
+                        onChange={(e) => {
+                          const updatedValidations = catalog.row_validation.map((v, i) => 
+                            i === validationIndex ? { ...v, description: e.target.value } : v
+                          );
+                          onUpdate(index, { ...catalog, row_validation: updatedValidations });
+                        }}
+                        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                        placeholder="Ej: El total debe ser mayor a cero"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Regla (pandas) *</label>
+                      <input
+                        type="text"
+                        value={validation.rule || ''}
+                        onChange={(e) => {
+                          const updatedValidations = catalog.row_validation.map((v, i) => 
+                            i === validationIndex ? { ...v, rule: e.target.value } : v
+                          );
+                          onUpdate(index, { ...catalog, row_validation: updatedValidations });
+                        }}
+                        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm font-mono"
+                        placeholder="df['total'] > 0"
+                      />
+                    </div>
+                    
+                    <div className="flex items-end">
+                      <div className="flex-1 mr-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Severidad</label>
+                        <select
+                          value={validation.severity || 'error'}
+                          onChange={(e) => {
+                            const updatedValidations = catalog.row_validation.map((v, i) => 
+                              i === validationIndex ? { ...v, severity: e.target.value } : v
+                            );
+                            onUpdate(index, { ...catalog, row_validation: updatedValidations });
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                        >
+                          {severityTypes.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const updatedValidations = catalog.row_validation.filter((_, i) => i !== validationIndex);
+                          onUpdate(index, { ...catalog, row_validation: updatedValidations });
+                        }}
+                        className="text-red-600 hover:text-red-800 text-sm mb-1"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Validaciones de Catálogo */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h5 className="font-medium text-gray-900">Validaciones de Catálogo (Opcional)</h5>
+              <Button 
+                onClick={() => {
+                  const newValidation = { name: '', description: '', rule: '', severity: 'error' };
+                  onUpdate(index, {
+                    ...catalog,
+                    catalog_validation: [...(catalog.catalog_validation || []), newValidation]
+                  });
+                }} 
+                variant="secondary" 
+                className="text-sm"
+              >
+                + Agregar Validación
+              </Button>
+            </div>
+            
+            {(!catalog.catalog_validation || catalog.catalog_validation.length === 0) ? (
+              <div className="text-center py-4 text-gray-500">
+                No hay validaciones de catálogo definidas.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {catalog.catalog_validation.map((validation, validationIndex) => (
+                  <div key={validationIndex} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-md">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                      <input
+                        type="text"
+                        value={validation.name || ''}
+                        onChange={(e) => {
+                          const updatedValidations = catalog.catalog_validation.map((v, i) => 
+                            i === validationIndex ? { ...v, name: e.target.value } : v
+                          );
+                          onUpdate(index, { ...catalog, catalog_validation: updatedValidations });
+                        }}
+                        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                        placeholder="Ej: Límite total"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                      <input
+                        type="text"
+                        value={validation.description || ''}
+                        onChange={(e) => {
+                          const updatedValidations = catalog.catalog_validation.map((v, i) => 
+                            i === validationIndex ? { ...v, description: e.target.value } : v
+                          );
+                          onUpdate(index, { ...catalog, catalog_validation: updatedValidations });
+                        }}
+                        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                        placeholder="Ej: El total general no debe exceder límite"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Regla (pandas) *</label>
+                      <input
+                        type="text"
+                        value={validation.rule || ''}
+                        onChange={(e) => {
+                          const updatedValidations = catalog.catalog_validation.map((v, i) => 
+                            i === validationIndex ? { ...v, rule: e.target.value } : v
+                          );
+                          onUpdate(index, { ...catalog, catalog_validation: updatedValidations });
+                        }}
+                        className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm font-mono"
+                        placeholder="df['total'].sum() < 1000000"
+                      />
+                    </div>
+                    
+                    <div className="flex items-end">
+                      <div className="flex-1 mr-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Severidad</label>
+                        <select
+                          value={validation.severity || 'error'}
+                          onChange={(e) => {
+                            const updatedValidations = catalog.catalog_validation.map((v, i) => 
+                              i === validationIndex ? { ...v, severity: e.target.value } : v
+                            );
+                            onUpdate(index, { ...catalog, catalog_validation: updatedValidations });
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                        >
+                          {severityTypes.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const updatedValidations = catalog.catalog_validation.filter((_, i) => i !== validationIndex);
+                          onUpdate(index, { ...catalog, catalog_validation: updatedValidations });
+                        }}
+                        className="text-red-600 hover:text-red-800 text-sm mb-1"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -1401,6 +1645,114 @@ const PackageYamlSection = ({ packageData, catalogs, onChange, fileTypes }) => (
               </label>
             );
           })}
+        </div>
+      )}
+    </div>
+    
+    {/* Validaciones de Paquete */}
+    <div className="border border-gray-200 rounded-lg p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h4 className="font-medium text-gray-900">Validaciones de Paquete (Opcional)</h4>
+        <Button 
+          onClick={() => {
+            const newValidation = { name: '', description: '', rule: '', severity: 'error' };
+            onChange({
+              ...packageData,
+              package_validation: [...(packageData.package_validation || []), newValidation]
+            });
+          }} 
+          variant="secondary" 
+          className="text-sm"
+        >
+          + Agregar Validación
+        </Button>
+      </div>
+      
+      {(!packageData.package_validation || packageData.package_validation.length === 0) ? (
+        <div className="text-center py-4 text-gray-500">
+          No hay validaciones de paquete definidas.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {packageData.package_validation.map((validation, validationIndex) => (
+            <div key={validationIndex} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-md">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                <input
+                  type="text"
+                  value={validation.name || ''}
+                  onChange={(e) => {
+                    const updatedValidations = packageData.package_validation.map((v, i) => 
+                      i === validationIndex ? { ...v, name: e.target.value } : v
+                    );
+                    onChange({ ...packageData, package_validation: updatedValidations });
+                  }}
+                  className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                  placeholder="Ej: Referencias válidas"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                <input
+                  type="text"
+                  value={validation.description || ''}
+                  onChange={(e) => {
+                    const updatedValidations = packageData.package_validation.map((v, i) => 
+                      i === validationIndex ? { ...v, description: e.target.value } : v
+                    );
+                    onChange({ ...packageData, package_validation: updatedValidations });
+                  }}
+                  className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                  placeholder="Ej: Referencias entre catálogos deben ser válidas"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Regla (pandas) *</label>
+                <input
+                  type="text"
+                  value={validation.rule || ''}
+                  onChange={(e) => {
+                    const updatedValidations = packageData.package_validation.map((v, i) => 
+                      i === validationIndex ? { ...v, rule: e.target.value } : v
+                    );
+                    onChange({ ...packageData, package_validation: updatedValidations });
+                  }}
+                  className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm font-mono"
+                  placeholder="df['ventas']['cliente'].isin(df['clientes']['id'])"
+                />
+              </div>
+              
+              <div className="flex items-end">
+                <div className="flex-1 mr-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Severidad</label>
+                  <select
+                    value={validation.severity || 'error'}
+                    onChange={(e) => {
+                      const updatedValidations = packageData.package_validation.map((v, i) => 
+                        i === validationIndex ? { ...v, severity: e.target.value } : v
+                      );
+                      onChange({ ...packageData, package_validation: updatedValidations });
+                    }}
+                    className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                  >
+                    <option value="error">error</option>
+                    <option value="warning">warning</option>
+                  </select>
+                </div>
+                <button
+                  onClick={() => {
+                    const updatedValidations = packageData.package_validation.filter((_, i) => i !== validationIndex);
+                    onChange({ ...packageData, package_validation: updatedValidations });
+                  }}
+                  className="text-red-600 hover:text-red-800 text-sm mb-1"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
