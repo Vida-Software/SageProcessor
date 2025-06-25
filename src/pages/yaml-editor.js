@@ -352,447 +352,142 @@ const YAMLEditorPage = () => {
       }
     };
 
-            // Propiedades del catálogo (nivel 4 espacios)
-            if (indent === 4 && trimmed.includes(':')) {
-              const colonIndex = trimmed.indexOf(':');
-              const key = trimmed.substring(0, colonIndex).trim();
-              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
+    // Función para agregar un nuevo catálogo
+    const addNewCatalog = () => {
+      const newCatalog = {
+        name: `Catálogo ${catalogs.length + 1}`,
+        description: "",
+        fields: [],
+        field_validation: [],
+        row_validation: [],
+        catalog_validation: []
+      };
+      setCatalogs([...catalogs, newCatalog]);
+    };
 
-              if (key === 'name') {
-                currentCatalog.name = value;
-              } else if (key === 'description') {
-                currentCatalog.description = value;
-              } else if (key === 'filename') {
-                currentCatalog.filename = value;
-              } else if (key === 'file_format') {
-                // Esperamos propiedades anidadas
-              } else if (key === 'fields') {
-                // Esperamos campos
-              } else if (key === 'row_validation') {
-                inRowValidation = true;
-                inCatalogValidation = false;
-                inFieldValidationRules = false;
-              } else if (key === 'catalog_validation') {
-                inCatalogValidation = true;
-                inRowValidation = false;
-                inFieldValidationRules = false;
-              }
-              continue;
-            }
+    // Funciones para el manejo del componente
+    const [showPreview, setShowPreview] = useState(false);
 
-            // Propiedades de file_format (nivel 6 espacios)
-            if (indent === 6 && trimmed.includes(':')) {
-              const colonIndex = trimmed.indexOf(':');
-              const key = trimmed.substring(0, colonIndex).trim();
-              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
-
-              if (key === 'type') {
-                currentCatalog.file_format.type = value;
-              } else if (key === 'delimiter') {
-                currentCatalog.file_format.delimiter = value;
-              } else if (key === 'header') {
-                currentCatalog.file_format.header = value === 'true';
-              }
-              continue;
-            }
-
-            // Nuevo campo o validación (cualquier nivel con guión dentro de catalogs)
-            if (currentCatalog && trimmed.startsWith('- ') && currentSection === 'catalogs') {
-              console.log(`🔍 DEBUGGING: Línea nivel con guión: "${line}"`);
-              console.log(`🔍 Estado: rowValidation=${inRowValidation}, catalogValidation=${inCatalogValidation}, fieldValidation=${inFieldValidationRules}`);
-              
-              const fieldLine = trimmed.substring(2).trim();
-              
-              // Si estamos en row_validation, agregar validación de fila
-              if (inRowValidation) {
-                const validation = { name: '', description: '', rule: '', severity: 'error' };
-                if (fieldLine.includes('name:')) {
-                  const nameMatch = fieldLine.match(/name:\s*["']?([^"']+)["']?/);
-                  if (nameMatch) validation.name = nameMatch[1];
-                }
-                currentCatalog.row_validation.push(validation);
-                console.log(`✅ Validación de fila agregada: ${validation.name}`);
-                continue;
-              }
-              
-              // Si estamos en catalog_validation, agregar validación de catálogo
-              if (inCatalogValidation) {
-                const validation = { name: '', description: '', rule: '', severity: 'error' };
-                if (fieldLine.includes('name:')) {
-                  const nameMatch = fieldLine.match(/name:\s*["']?([^"']+)["']?/);
-                  if (nameMatch) validation.name = nameMatch[1];
-                }
-                currentCatalog.catalog_validation.push(validation);
-                console.log(`✅ Validación de catálogo agregada: ${validation.name}`);
-                continue;
-              }
-              
-              // Si estamos en field validation_rules, agregar validación de campo
-              if (inFieldValidationRules && currentField) {
-                const validation = { name: '', description: '', rule: '', severity: 'error' };
-                if (fieldLine.includes('name:')) {
-                  const nameMatch = fieldLine.match(/name:\s*["']?([^"']+)["']?/);
-                  if (nameMatch) validation.name = nameMatch[1];
-                }
-                currentField.validation_rules = currentField.validation_rules || [];
-                currentField.validation_rules.push(validation);
-                console.log(`✅ Validación de campo agregada: ${validation.name} para campo ${currentField.name}`);
-                continue;
-              }
-              
-              // Si no estamos en validaciones, es un campo normal
-              console.log(`🔍 Contenido después del guión: "${fieldLine}"`);
-              
-              // Puede ser "- name: NombreCampo" o solo "- name: NombreCampo"
-              if (fieldLine.startsWith('name:')) {
-                const fieldName = fieldLine.substring(5).trim().replace(/^["']|["']$/g, '');
-                console.log(`🔍 CAMPO DETECTADO: "${fieldName}"`);
-                currentField = {
-                  name: fieldName,
-                  type: 'texto',
-                  required: false,
-                  unique: false,
-                  description: '',
-                  defaultValue: '',
-                  validation_rules: []
-                };
-                currentCatalog.fields.push(currentField);
-                inFieldValidationRules = false;
-                inRowValidation = false;
-                inCatalogValidation = false;
-                console.log(`✅ Campo agregado: ${fieldName}. Total campos en catálogo: ${currentCatalog.fields.length}`);
-              } else {
-                console.log(`🔍 Guión sin name: inmediato, esperando siguiente línea`);
-                // Caso donde el guión está solo y name: viene en la siguiente línea
-                // Crear un campo temporal para la siguiente línea
-                currentField = {
-                  name: '',
-                  type: 'texto',
-                  required: false,
-                  unique: false,
-                  description: '',
-                  defaultValue: '',
-                  validation_rules: []
-                };
-                currentCatalog.fields.push(currentField);
-                inFieldValidationRules = false;
-                inRowValidation = false;
-                inCatalogValidation = false;
-                console.log(`🔍 Campo temporal creado, esperando name:`);
-              }
-              continue;
-            }
-
-            // Propiedades del campo que está en proceso (línea después del guión)
-            if (currentField && currentField.name === '' && indent === 6 && trimmed.startsWith('name:')) {
-              const fieldName = trimmed.substring(5).trim().replace(/^["']|["']$/g, '');
-              currentField.name = fieldName;
-              console.log(`Campo asignado: ${fieldName}`);
-              continue;
-            }
-
-            // Propiedades del campo (cualquier nivel mayor que el campo)
-            if (currentField && indent > 4 && trimmed.includes(':') && !trimmed.startsWith('- ')) {
-              const colonIndex = trimmed.indexOf(':');
-              const key = trimmed.substring(0, colonIndex).trim();
-              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
-
-              if (key === 'type') {
-                currentField.type = value;
-                console.log(`Campo ${currentField.name}: tipo = ${value}`);
-              } else if (key === 'required') {
-                currentField.required = value === 'true';
-                console.log(`Campo ${currentField.name}: required = ${value}`);
-              } else if (key === 'unique') {
-                currentField.unique = value === 'true';
-                console.log(`Campo ${currentField.name}: unique = ${value}`);
-              } else if (key === 'description') {
-                currentField.description = value;
-              } else if (key === 'defaultValue') {
-                currentField.defaultValue = value;
-              } else if (key === 'validation_rules') {
-                inFieldValidationRules = true;
-                inRowValidation = false;
-                inCatalogValidation = false;
-                console.log(`Campo ${currentField.name}: iniciando validation_rules`);
-              }
-              continue;
-            }
-
-            // Validaciones de campo (nivel 6, con guión)
-            if (currentField && inFieldValidationRules && indent === 6 && trimmed.startsWith('- ')) {
-              const validationLine = trimmed.substring(2).trim();
-              if (validationLine.startsWith('name:')) {
-                const validationName = validationLine.substring(5).trim().replace(/^["']|["']$/g, '');
-                currentValidation = {
-                  name: validationName,
-                  description: '',
-                  rule: '',
-                  severity: 'error'
-                };
-                currentField.validation_rules.push(currentValidation);
-                console.log(`Nueva validación de campo ${currentField.name}: ${validationName}`);
-              } else {
-                // Crear validación temporal si el guión está solo
-                currentValidation = {
-                  name: '',
-                  description: '',
-                  rule: '',
-                  severity: 'error'
-                };
-                currentField.validation_rules.push(currentValidation);
-              }
-              continue;
-            }
-
-            // Propiedades de validación que están después del guión
-            if (currentValidation && currentValidation.name === '' && inFieldValidationRules && indent === 8 && trimmed.startsWith('name:')) {
-              const validationName = trimmed.substring(5).trim().replace(/^["']|["']$/g, '');
-              currentValidation.name = validationName;
-              console.log(`Validación asignada: ${validationName}`);
-              continue;
-            }
-
-            // Propiedades de validaciones de campo (nivel 8 espacios)
-            if (currentValidation && inFieldValidationRules && indent === 8 && trimmed.includes(':')) {
-              const colonIndex = trimmed.indexOf(':');
-              const key = trimmed.substring(0, colonIndex).trim();
-              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
-
-              if (key === 'description') {
-                currentValidation.description = value;
-              } else if (key === 'rule') {
-                currentValidation.rule = value;
-              } else if (key === 'severity') {
-                currentValidation.severity = value.toLowerCase();
-              }
-              continue;
-            }
-
-            // Validaciones de catálogo (row_validation y catalog_validation - nivel 4, con guión)
-            if ((inRowValidation || inCatalogValidation) && indent === 4 && trimmed.startsWith('- ')) {
-              const validationData = trimmed.substring(2).trim();
-              if (validationData.startsWith('name:')) {
-                const validationName = validationData.substring(5).trim().replace(/^["']|["']$/g, '');
-                currentValidation = {
-                  name: validationName,
-                  description: '',
-                  rule: '',
-                  severity: 'error'
-                };
-                
-                if (inRowValidation) {
-                  currentCatalog.row_validation.push(currentValidation);
-                } else if (inCatalogValidation) {
-                  currentCatalog.catalog_validation.push(currentValidation);
-                }
-                console.log(`Nueva validación de catálogo: ${validationName}`);
-              }
-              continue;
-            }
-
-            // Propiedades de validaciones de catálogo (nivel 6 espacios)
-            if (currentValidation && (inRowValidation || inCatalogValidation) && indent === 6 && trimmed.includes(':')) {
-              const colonIndex = trimmed.indexOf(':');
-              const key = trimmed.substring(0, colonIndex).trim();
-              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
-
-              if (key === 'description') {
-                currentValidation.description = value;
-              } else if (key === 'rule') {
-                currentValidation.rule = value;
-              } else if (key === 'severity') {
-                currentValidation.severity = value.toLowerCase();
-              }
-              continue;
-            }
-          }
-
-          // Parsear packages
-          else if (currentSection === 'packages') {
-            // Nuevo paquete
-            if (indent <= 2 && trimmed.includes(':') && !trimmed.includes(' ')) {
-              const packageKey = trimmed.replace(':', '').trim();
-              currentPackage = {
-                name: packageKey,
-                description: '',
-                catalogs: [],
-                file_format: { type: 'ZIP' },
-                package_validation: []
-              };
-              result.package = currentPackage;
-              continue;
-            }
-
-            if (!currentPackage) continue;
-
-            // Propiedades del paquete (nivel 4 espacios)
-            if (indent === 4 && trimmed.includes(':')) {
-              const colonIndex = trimmed.indexOf(':');
-              const key = trimmed.substring(0, colonIndex).trim();
-              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
-
-              if (key === 'name') {
-                currentPackage.name = value;
-              } else if (key === 'description') {
-                currentPackage.description = value;
-              } else if (key === 'file_format') {
-                // Esperamos propiedades del file_format
-              } else if (key === 'catalogs') {
-                // Esperamos lista de catálogos
-              } else if (key === 'package_validation') {
-                // Esperamos validaciones de paquete
-              }
-              continue;
-            }
-
-            // Propiedades de file_format del paquete (nivel 6 espacios)
-            if (indent === 6 && trimmed.includes(':')) {
-              const colonIndex = trimmed.indexOf(':');
-              const key = trimmed.substring(0, colonIndex).trim();
-              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
-
-              if (key === 'type') {
-                currentPackage.file_format.type = value;
-              }
-            }
-
-            // Catálogos del paquete (array)
-            else if (indent === 4 && trimmed.startsWith('- ')) {
-              const catalogName = trimmed.substring(2).trim().replace(/^["']|["']$/g, '');
-              currentPackage.catalogs.push(catalogName);
-            }
-
-            // Validaciones de paquete (nivel 4, con guión)
-            else if (indent === 4 && trimmed.startsWith('- ')) {
-              const validationData = trimmed.substring(2).trim();
-              if (validationData.includes(':')) {
-                const [key, ...valueParts] = validationData.split(':');
-                let value = valueParts.join(':').trim();
-                value = value.replace(/^["']|["']$/g, '');
-                
-                if (key.trim() === 'name') {
-                  currentValidation = {
-                    name: value,
-                    description: '',
-                    rule: '',
-                    severity: 'error'
-                  };
-                  currentPackage.package_validation.push(currentValidation);
-                }
-              }
-            }
-
-            // Propiedades de validaciones de paquete (nivel 6 espacios)
-            else if (currentValidation && indent === 6 && trimmed.includes(':')) {
-              const colonIndex = trimmed.indexOf(':');
-              const key = trimmed.substring(0, colonIndex).trim();
-              const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
-
-              if (key === 'description') {
-                currentValidation.description = value;
-              } else if (key === 'rule') {
-                currentValidation.rule = value;
-              } else if (key === 'severity') {
-                currentValidation.severity = value;
-              }
-            }
-          }
+    // Función para parsear YAML usando js-yaml (sintáctico, no posicional)
+    const parseYamlContent = (yamlText) => {
+      try {
+        console.log('🔍 Iniciando parser sintáctico YAML...');
+        const parsed = yaml.parse(yamlText);
+        
+        if (!parsed) {
+          console.warn('YAML vacío o nulo');
+          return null;
         }
 
-        console.log('Parser completado. Catálogos encontrados:', result.catalogs.length);
-        if (result.catalogs.length > 0) {
-          console.log('Primer catálogo:', result.catalogs[0].name, 'con', result.catalogs[0].fields.length, 'campos');
-          result.catalogs[0].fields.forEach((field, idx) => {
-            console.log(`Campo ${idx + 1}: ${field.name} (${field.type}), validaciones: ${field.validation_rules.length}`);
+        const result = {
+          sage_yaml: {},
+          catalogs: [],
+          package: {}
+        };
+
+        // Parsear sage_yaml
+        if (parsed.sage_yaml) {
+          result.sage_yaml = { ...parsed.sage_yaml };
+          console.log('✅ sage_yaml parseado:', Object.keys(result.sage_yaml).length, 'propiedades');
+        }
+
+        // Parsear catalogs
+        if (parsed.catalogs && typeof parsed.catalogs === 'object') {
+          Object.entries(parsed.catalogs).forEach(([catalogName, catalogData]) => {
+            const catalog = {
+              name: catalogName,
+              description: catalogData.description || '',
+              filename: catalogData.filename || '',
+              file_format: catalogData.file_format || { type: 'CSV', delimiter: ',', header: true },
+              fields: [],
+              field_validation: [],
+              row_validation: [],
+              catalog_validation: []
+            };
+
+            // Parsear fields
+            if (catalogData.fields && Array.isArray(catalogData.fields)) {
+              catalogData.fields.forEach(fieldData => {
+                const field = {
+                  name: fieldData.name || '',
+                  type: fieldData.type || 'texto',
+                  required: fieldData.required || false,
+                  unique: fieldData.unique || false,
+                  description: fieldData.description || '',
+                  defaultValue: fieldData.defaultValue || ''
+                };
+
+                // Parsear validation_rules del campo (ahora field_validation)
+                if (fieldData.validation_rules && Array.isArray(fieldData.validation_rules)) {
+                  field.validation_rules = fieldData.validation_rules.map(rule => ({
+                    name: rule.name || '',
+                    description: rule.description || '',
+                    rule: rule.rule || '',
+                    severity: rule.severity || 'error'
+                  }));
+                } else {
+                  field.validation_rules = [];
+                }
+
+                catalog.fields.push(field);
+              });
+            }
+
+            // Parsear row_validation
+            if (catalogData.row_validation && Array.isArray(catalogData.row_validation)) {
+              catalog.row_validation = catalogData.row_validation.map(rule => ({
+                name: rule.name || '',
+                description: rule.description || '',
+                rule: rule.rule || '',
+                severity: rule.severity || 'error'
+              }));
+            }
+
+            // Parsear catalog_validation
+            if (catalogData.catalog_validation && Array.isArray(catalogData.catalog_validation)) {
+              catalog.catalog_validation = catalogData.catalog_validation.map(rule => ({
+                name: rule.name || '',
+                description: rule.description || '',
+                rule: rule.rule || '',
+                severity: rule.severity || 'error'
+              }));
+            }
+
+            result.catalogs.push(catalog);
+            console.log(`✅ Catálogo parseado: ${catalogName} con ${catalog.fields.length} campos`);
           });
         }
+
+        // Parsear package
+        if (parsed.package) {
+          result.package = {
+            name: parsed.package.name || '',
+            description: parsed.package.description || '',
+            catalogs: parsed.package.catalogs || [],
+            file_format: parsed.package.file_format || { type: 'ZIP' },
+            package_validation: []
+          };
+
+          // Parsear package_validation
+          if (parsed.package.package_validation && Array.isArray(parsed.package.package_validation)) {
+            result.package.package_validation = parsed.package.package_validation.map(rule => ({
+              name: rule.name || '',
+              description: rule.description || '',
+              rule: rule.rule || '',
+              severity: rule.severity || 'error'
+            }));
+          }
+
+          console.log('✅ Package parseado:', result.package.name);
+        }
+
+        console.log('🎉 Parser sintáctico completado. Catálogos encontrados:', result.catalogs.length);
         return result;
       } catch (error) {
-        console.error('Error parsing YAML:', error);
+        console.error('❌ Error parsing YAML:', error);
         return null;
       }
     };
-
-    // Parser YAML especializado para estructura SAGE
-    const parseSimpleYAML = (yamlContent) => {
-      try {
-        const lines = yamlContent.split('\n');
-        const result = {};
-        let currentObject = result;
-        let arrayStack = []; // Stack para manejar objetos en arrays
-        let currentArrayItem = null;
-        
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          const trimmed = line.trim();
-          
-          if (!trimmed || trimmed.startsWith('#')) continue;
-          
-          const indent = line.search(/\S/);
-          const level = Math.floor(indent / 2);
-          
-          if (trimmed.startsWith('- ') && trimmed.includes(':')) {
-            // Es el inicio de un nuevo objeto en array
-            const content = trimmed.substring(2).trim();
-            const colonIndex = content.indexOf(':');
-            const key = content.substring(0, colonIndex).trim();
-            const value = content.substring(colonIndex + 1).trim();
-            
-            // Crear nuevo objeto para el array
-            currentArrayItem = {};
-            currentArrayItem[key] = value.replace(/^["']|["']$/g, '');
-            
-            // Encontrar el array padre basado en el contexto
-            const parentPath = findParentPath(result, level);
-            if (parentPath && parentPath.array) {
-              parentPath.array.push(currentArrayItem);
-            }
-            
-          } else if (trimmed.startsWith('- ') && !trimmed.includes(':')) {
-            // Es un valor simple en array
-            const value = trimmed.substring(2).trim().replace(/^["']|["']$/g, '');
-            const parentPath = findParentPath(result, level);
-            if (parentPath && parentPath.array) {
-              parentPath.array.push(value);
-            }
-            
-          } else if (trimmed.endsWith(':')) {
-            // Es una clave de objeto o array
-            const key = trimmed.slice(0, -1);
-            const path = buildPath(result, level, key);
-            
-            // Determinar si el próximo nivel es un array
-            const nextLine = i + 1 < lines.length ? lines[i + 1] : '';
-            const nextTrimmed = nextLine.trim();
-            
-            if (nextTrimmed.startsWith('- ')) {
-              // Es un array
-              setNestedValue(result, path, []);
-            } else {
-              // Es un objeto
-              setNestedValue(result, path, {});
-            }
-            
-          } else if (trimmed.includes(':')) {
-            // Es una propiedad simple
-            const colonIndex = trimmed.indexOf(':');
-            const key = trimmed.substring(0, colonIndex).trim();
-            const value = trimmed.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
-            
-            // Si estamos dentro de un objeto de array, agregar ahí
-            if (currentArrayItem && level > 0) {
-              currentArrayItem[key] = value;
-            } else {
-              // Agregar al objeto principal
-              const path = buildPath(result, level, key);
-              setNestedValue(result, path, value);
-            }
-          }
-        }
-        
-        return result;
-      } catch (error) {
         console.error('Error en parseSimpleYAML:', error);
         return null;
       }
