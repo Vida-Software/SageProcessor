@@ -1,8 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { pool } from '../../../../lib/db';
+import { pool } from '../../../../utils/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
+
+  console.log('pool', pool);
 
   if (method !== 'GET') {
     res.setHeader('Allow', ['GET']);

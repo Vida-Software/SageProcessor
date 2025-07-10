@@ -1,4 +1,4 @@
-import { pool } from '../../../../lib/db';
+import { pool } from '../../../../utils/db';
 
 /**
  * API para listar buckets MinIO con debug adicional

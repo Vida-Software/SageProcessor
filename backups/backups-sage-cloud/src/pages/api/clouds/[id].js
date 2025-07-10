@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { pool } from '../../../lib/db';
+import { pool } from '../../../utils/db';
 
 export default async function handler(req, res) {
   const { method } = req;

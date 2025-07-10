@@ -10,7 +10,7 @@ export default async function handler(req, res) {
       // Si se proporciona un ID, obtener el proyecto específico
       if (id) {
         try {
-          const response = await fetch(`http://localhost:5001/api/evidence/projects/${id}`);
+          const response = await fetch(`http://localhost:5000/api/evidence/projects/${id}`);
           const data = await response.json();
           
           if (response.ok) {
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       
       // Si no se proporciona un ID, listar todos los proyectos
       try {
-        const response = await fetch('http://localhost:5001/api/evidence/projects');
+        const response = await fetch('http://localhost:5000/api/evidence/projects');
         const data = await response.json();
         
         return res.status(200).json(data);
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     // POST - Crear un nuevo proyecto
     if (method === 'POST') {
       try {
-        const response = await fetch('http://localhost:5001/api/evidence/projects', {
+        const response = await fetch('http://localhost:5000/api/evidence/projects', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
       }
       
       try {
-        const response = await fetch(`http://localhost:5001/api/evidence/projects/${id}`, {
+        const response = await fetch(`http://localhost:5000/api/evidence/projects/${id}`, {
           method: 'DELETE'
         });
         

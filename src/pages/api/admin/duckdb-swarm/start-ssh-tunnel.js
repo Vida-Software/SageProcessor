@@ -14,7 +14,7 @@ async function getServer(serverId) {
     
     // Si no se encuentra en PostgreSQL, intentar obtenerlo de la API DuckDB Swarm
     console.log('No se encontró en PostgreSQL, intentando API DuckDB Swarm...');
-    const response = await fetch(`http://localhost:5001/api/servers`);
+    const response = await fetch(`http://localhost:5000/api/servers`);
     if (!response.ok) {
       throw new Error(`Error al obtener servidores de DuckDB Swarm API: ${response.status}`);
     }

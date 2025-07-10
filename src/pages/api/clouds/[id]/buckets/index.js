@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { pool } from '../../../../../lib/db';
+import { pool } from '../../../../../utils/db';
 import { getCloudAdapter } from '../../../../../utils/cloud';
 
 export default async function handler(req, res) {

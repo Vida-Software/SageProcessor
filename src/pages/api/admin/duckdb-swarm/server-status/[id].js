@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 
           // 2. Verificar el estado del servidor a través del endpoint de DuckDB Swarm API
           try {
-            const response = await fetch(`http://localhost:5001/api/servers/${serverId}/status`, {
+            const response = await fetch(`http://localhost:5000/api/servers/${serverId}/status`, {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json'

@@ -1,4 +1,4 @@
-import { pool } from '@/lib/db';
+import { pool } from '@/utils/db';
 
 /**
  * API para obtener los destinos disponibles para materialización (nubes y bases de datos)

@@ -336,7 +336,7 @@ def start_duckdb_ui(server_id):
     try:
         # Para manejar UUIDs correctamente, obtenemos el servidor de nuestra propia API
         # Obtener los servidores disponibles de nuestra propia API
-        servers_response = requests.get('http://localhost:5001/api/servers')
+        servers_response = requests.get('http://localhost:5000/api/servers')
         if not servers_response.ok:
             return jsonify({'error': 'No se pudo obtener la lista de servidores'}), 500
             
@@ -603,7 +603,7 @@ def check_server_status(server_id):
         # Para manejar UUIDs correctamente, obtenemos el servidor de nuestra propia API
         try:
             # Obtener los servidores disponibles de nuestra propia API
-            servers_response = requests.get('http://localhost:5001/api/servers')
+            servers_response = requests.get('http://localhost:5000/api/servers')
             if not servers_response.ok:
                 return jsonify({'error': 'No se pudo obtener la lista de servidores'}), 500
                 
@@ -672,7 +672,7 @@ def delete_server(server_id):
         # Para manejar UUIDs correctamente, obtenemos el servidor de nuestra propia API
         try:
             # Obtener los servidores disponibles de nuestra propia API
-            servers_response = requests.get('http://localhost:5001/api/servers')
+            servers_response = requests.get('http://localhost:5000/api/servers')
             if not servers_response.ok:
                 return jsonify({'error': 'No se pudo obtener la lista de servidores'}), 500
                 
@@ -2752,7 +2752,7 @@ def start_duckdb_notebook(server_id):
     try:
         # Para manejar UUIDs correctamente, obtenemos el servidor de nuestra propia API
         # Obtener los servidores disponibles de nuestra propia API
-        servers_response = requests.get('http://localhost:5001/api/servers')
+        servers_response = requests.get('http://localhost:5000/api/servers')
         if not servers_response.ok:
             return jsonify({'error': 'No se pudo obtener la lista de servidores'}), 500
             

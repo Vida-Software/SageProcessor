@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     // GET - Listar instalaciones SAGE
     if (method === 'GET') {
       // Obtener las instalaciones desde la API Flask
-      const response = await fetch('http://localhost:5001/api/sage/installations');
+      const response = await fetch('http://localhost:5000/api/sage/installations');
       
       // Si el endpoint no está implementado aún, devolvemos datos de ejemplo
       if (!response.ok) {

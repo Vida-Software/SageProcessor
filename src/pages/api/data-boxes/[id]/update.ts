@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { pool } from '../../../../lib/db';
+import { pool } from '../../../../utils/db';
 import { extraerMetadatosYaml } from '../../../../lib/yaml-parser';
 
 export default async function handler(

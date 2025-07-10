@@ -1,4 +1,4 @@
-import { query } from '@/lib/db';
+import { query } from '@/utils/db';
 import { Pool } from 'pg';
 
 // Obtener la conexión a la base de datos

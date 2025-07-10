@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     // GET - Listar proveedores de nube
     if (method === 'GET') {
       // Obtener los proveedores de nube desde la API Flask
-      const response = await fetch('http://localhost:5001/api/storage/providers');
+      const response = await fetch('http://localhost:5000/api/storage/providers');
       const data = await response.json();
       
       return res.status(200).json(data);

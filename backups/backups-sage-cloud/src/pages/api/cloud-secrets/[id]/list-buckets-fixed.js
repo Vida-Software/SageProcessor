@@ -1,4 +1,4 @@
-import { pool } from '../../../../lib/db';
+import { pool } from '../../../../utils/db';
 import { listBuckets } from '../../../../src/utils/cloud/adapters/minio_fixed';
 
 /**

@@ -10,7 +10,7 @@ export default async function handler(req, res) {
       // Si se proporciona un ID, obtener el dataset específico
       if (id) {
         try {
-          const response = await fetch(`http://localhost:5001/api/powerbi/datasets/${id}`);
+          const response = await fetch(`http://localhost:5000/api/powerbi/datasets/${id}`);
           const data = await response.json();
           
           if (response.ok) {
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       
       // Si no se proporciona un ID, listar todos los datasets
       try {
-        const response = await fetch('http://localhost:5001/api/powerbi/datasets');
+        const response = await fetch('http://localhost:5000/api/powerbi/datasets');
         const data = await response.json();
         
         return res.status(200).json(data);
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       // Si se proporciona un ID y la acción es "refresh", refrescar el dataset
       if (id && action === 'refresh') {
         try {
-          const response = await fetch(`http://localhost:5001/api/powerbi/datasets/${id}/refresh`, {
+          const response = await fetch(`http://localhost:5000/api/powerbi/datasets/${id}/refresh`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
       
       // Si no se proporciona un ID, crear un nuevo dataset
       try {
-        const response = await fetch('http://localhost:5001/api/powerbi/datasets', {
+        const response = await fetch('http://localhost:5000/api/powerbi/datasets', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -92,7 +92,7 @@ export default async function handler(req, res) {
       }
       
       try {
-        const response = await fetch(`http://localhost:5001/api/powerbi/datasets/${id}`, {
+        const response = await fetch(`http://localhost:5000/api/powerbi/datasets/${id}`, {
           method: 'DELETE'
         });
         

@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     const timeoutId = setTimeout(() => controller.abort(), 300000);
     
     // Construir URL base y parámetros según el método elegido
-    const baseUrl = `http://localhost:5001/api/servers/${id}/vnc/repair`;
+    const baseUrl = `http://localhost:5000/api/servers/${id}/vnc/repair`;
     const url = repairMethod !== 'auto' ? `${baseUrl}?method=${repairMethod}` : baseUrl;
     
     // Llamar al API de DuckDB Swarm para reparar VNC con timeout extendido

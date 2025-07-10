@@ -8,7 +8,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { pool } from '../../lib/db';
+import { pool } from '../../utils/db';
 import cloudUtils from './index';
 
 /**

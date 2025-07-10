@@ -11,7 +11,7 @@ export default async function handler(req, res) {
       // Si se proporciona un ID, obtener la ejecución específica
       if (id) {
         try {
-          const response = await fetch(`http://localhost:5001/api/executions/${id}`);
+          const response = await fetch(`http://localhost:5000/api/executions/${id}`);
           const data = await response.json();
           
           if (response.ok) {
@@ -27,7 +27,8 @@ export default async function handler(req, res) {
       
       // Si no se proporciona un ID, listar todas las ejecuciones
       try {
-        const response = await fetch('http://localhost:5001/api/executions');
+        const response = await fetch('http://localhost:5000/api/executions');
+        console.log(response)
         const data = await response.json();
         
         return res.status(200).json(data);
@@ -46,7 +47,7 @@ export default async function handler(req, res) {
       }
       
       try {
-        const response = await fetch(`http://localhost:5001/api/pipelines/${pipeline_id}/execute`, {
+        const response = await fetch(`http://localhost:5000/api/pipelines/${pipeline_id}/execute`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

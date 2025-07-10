@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   const { endpoint } = query;
 
   // URL base de la API de Flask
-  const baseApiUrl = 'http://localhost:5001/api';
+  const baseApiUrl = 'http://localhost:5000/api';
   
   // Construir la URL de destino, eliminando "proxy" de la ruta
   let targetUrl = `${baseApiUrl}/${endpoint || ''}`;

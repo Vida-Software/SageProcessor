@@ -1,4 +1,4 @@
-import { pool } from '../../../lib/db';
+import { pool } from '../../../utils/db';
 import migrationService from '../../../utils/cloud/migration-service';
 
 export default async function handler(req, res) {

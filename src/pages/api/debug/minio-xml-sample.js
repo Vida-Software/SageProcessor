@@ -1,4 +1,4 @@
-import { pool } from '../../../lib/db';
+import { pool } from '../../../utils/db';
 
 /**
  * Endpoint de depuración para examinar la respuesta XML de MinIO

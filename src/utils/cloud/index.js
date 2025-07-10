@@ -7,7 +7,7 @@
  * transparente, sin importar dónde se almacenen los datos.
  */
 
-import { pool } from '../../lib/db';
+import { pool } from '../../utils/db';
 
 /**
  * Adaptadores para los diferentes tipos de proveedores de nube

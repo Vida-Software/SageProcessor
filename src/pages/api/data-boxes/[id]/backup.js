@@ -1,4 +1,4 @@
-import { pool } from "../../../../lib/db";
+import { pool } from "../../../../utils/db";
 
 /**
  * API Handler para crear backups de casillas de datos
