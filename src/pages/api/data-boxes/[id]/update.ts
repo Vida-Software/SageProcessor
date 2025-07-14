@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../utils/db';
-import { extraerMetadatosYaml } from '../../../../lib/yaml-parser';
+// import { extraerMetadatosYaml } from '../../../../lib/yaml-parser';
 
 export default async function handler(
   req: NextApiRequest,
@@ -48,9 +48,9 @@ export default async function handler(
         console.log('Procesando nuevo contenido YAML para casilla ID:', id);
         
         // Extraer nombre y descripción del contenido YAML
-        const metadatos = extraerMetadatosYaml(yaml_content);
+        /*const metadatos = extraerMetadatosYaml(yaml_content);
         nombre = metadatos.nombre;
-        descripcion = metadatos.descripcion;
+        descripcion = metadatos.descripcion;*/
         
         console.log('Metadatos extraídos:', { nombre, descripcion });
       }

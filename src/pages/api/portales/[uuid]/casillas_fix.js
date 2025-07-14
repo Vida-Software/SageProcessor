@@ -1,8 +1,8 @@
 import { Pool } from 'pg'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "../../auth/[...nextauth]"
+// import { getServerSession } from "next-auth/next"
+// import { authOptions } from "../../auth/[...nextauth]"
 
 // Configuración de la conexión a la base de datos PostgreSQL
 const pool = new Pool({
@@ -21,11 +21,11 @@ export default async function handler(req, res) {
     console.log(`Solicitud ${method} a /api/portales/${uuid}/casillas`)
 
     // Verificación de sesión y autorización
-    const session = await getServerSession(req, res, authOptions)
+    /*const session = await getServerSession(req, res, authOptions)
     
     if (!session && process.env.NODE_ENV === 'production') {
       return res.status(401).json({ error: 'No autorizado' })
-    }
+    }*/
 
     // Obtener información del portal por UUID
     const portalQuery = `

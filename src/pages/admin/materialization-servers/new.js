@@ -16,7 +16,7 @@ import {
   Switch
 } from '@tremor/react';
 import { ArrowLeftIcon, ServerIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
-import Breadcrumbs from '@/components/Breadcrumbs';
+// import Breadcrumbs from '@/components/Breadcrumbs';
 import { toast } from 'react-toastify';
 
 export default function NewMaterializationServer() {
@@ -125,13 +125,6 @@ export default function NewMaterializationServer() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Materializaciones', href: '/admin/materializations' },
-          { label: 'Servidores', href: '/admin/materialization-servers' },
-          { label: 'Nuevo Servidor', current: true }
-        ]} />
-        
         <div className="sm:flex sm:justify-between sm:items-center mb-8">
           <Title>Crear Servidor de Materialización</Title>
           <div className="mt-4 sm:mt-0">

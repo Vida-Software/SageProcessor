@@ -16,7 +16,7 @@ import {
   Switch
 } from '@tremor/react';
 import { ArrowLeftIcon, ServerIcon, KeyIcon } from '@heroicons/react/24/outline';
-import Breadcrumbs from '@/components/Breadcrumbs';
+// import Breadcrumbs from '@/components/Breadcrumbs';
 import { toast } from 'react-toastify';
 
 export default function NewDBSecret() {
@@ -130,12 +130,6 @@ export default function NewDBSecret() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Secretos de Bases de Datos', href: '/admin/db-secrets' },
-          { label: 'Nuevo Secreto', current: true }
-        ]} />
-        
         <div className="sm:flex sm:justify-between sm:items-center mb-8">
           <Title>Crear Secreto de Base de Datos</Title>
           <div className="mt-4 sm:mt-0">

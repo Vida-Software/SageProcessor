@@ -30,7 +30,7 @@ import {
   SaveIcon,
   DatabaseIcon
 } from '@heroicons/react/24/outline';
-import Breadcrumbs from '@/components/Breadcrumbs';
+// import Breadcrumbs from '@/components/Breadcrumbs';
 import { toast } from 'react-toastify';
 
 export default function CasillaDetailsPage() {
@@ -159,12 +159,6 @@ export default function CasillaDetailsPage() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Casillas', href: '/admin/casillas' },
-          { label: isNew ? 'Nueva Casilla' : casilla.nombre, current: true }
-        ]} />
-        
         <div className="sm:flex sm:justify-between sm:items-center mb-8">
           <div>
             <Title>{isNew ? 'Nueva Casilla' : `Editar: ${casilla.nombre}`}</Title>

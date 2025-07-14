@@ -27,8 +27,8 @@ import {
   ArrowPathIcon, 
   InformationCircleIcon 
 } from '@heroicons/react/24/outline';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import Breadcrumbs from '@/components/Breadcrumbs';
+// import ConfirmDialog from '@/components/ConfirmDialog';
+// import Breadcrumbs from '@/components/Breadcrumbs';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 
@@ -151,12 +151,6 @@ export default function MaterializationServersPage() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Materializaciones', href: '/admin/materializations' },
-          { label: 'Servidores', current: true }
-        ]} />
-        
         <div className="sm:flex sm:justify-between sm:items-center mb-8">
           <Title>Servidores de Materialización</Title>
           <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
@@ -312,19 +306,6 @@ export default function MaterializationServersPage() {
           )}
         </Card>
       </div>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Confirmar eliminación"
-        message={`¿Está seguro que desea eliminar el servidor "${serverToDelete?.nombre}"? Esta acción no se puede deshacer.`}
-        confirmLabel="Eliminar"
-        cancelLabel="Cancelar"
-        onConfirm={confirmDelete}
-        onCancel={() => {
-          setServerToDelete(null);
-          setConfirmOpen(false);
-        }}
-      />
     </Layout>
   );
 }

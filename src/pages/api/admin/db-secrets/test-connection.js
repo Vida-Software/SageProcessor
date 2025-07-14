@@ -1,5 +1,5 @@
 import pg from 'pg';
-import mysql from 'mysql2/promise';
+//import mysql from 'mysql2/promise';
 
 /**
  * API para probar la conexión a una base de datos
@@ -24,8 +24,8 @@ export default async function handler(req, res) {
     switch (tipo_servidor) {
       case 'postgresql':
         return await testPostgreSQL(res, configuracion);
-      case 'mysql':
-        return await testMySQL(res, configuracion);
+      /*case 'mysql':
+        return await testMySQL(res, configuracion);*/
       case 'sqlserver':
         // En caso real, aquí implementaríamos la conexión a SQL Server
         return res.status(200).json({ message: 'API de prueba de conexión SQL Server aún no implementada' });
@@ -98,7 +98,7 @@ async function testPostgreSQL(res, configuracion) {
 /**
  * Prueba conexión a MySQL
  */
-async function testMySQL(res, configuracion) {
+/*async function testMySQL(res, configuracion) {
   const { host, port, username, password, database, ssl } = configuracion;
   
   // Validar campos requeridos
@@ -144,4 +144,4 @@ async function testMySQL(res, configuracion) {
       }
     }
   }
-}
+}*/

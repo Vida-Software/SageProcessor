@@ -1,4 +1,4 @@
-FROM node:18-alpine AS base
+FROM node:20.14.0-alpine AS base
 
 # Instalar dependencias necesarias para Python y compilación
 RUN apk add --no-cache python3 py3-pip postgresql-client supervisor bash curl
@@ -10,7 +10,9 @@ COPY package*.json ./
 COPY pyproject.toml ./
 
 # Instalar dependencias de Node.js
-RUN npm ci
+RUN npm install --legacy-peer-deps
+
+RUN npm install --legacy-peer-deps mysql2-promise
 
 # Copiar todos los archivos de código fuente
 COPY . .

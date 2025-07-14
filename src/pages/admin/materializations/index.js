@@ -32,8 +32,8 @@ import {
   ArrowPathIcon,
   AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import Breadcrumbs from '@/components/Breadcrumbs';
+// import ConfirmDialog from '@/components/ConfirmDialog';
+// import Breadcrumbs from '@/components/Breadcrumbs';
 import { toast } from 'react-toastify';
 
 export default function MaterializationsPage() {
@@ -225,11 +225,6 @@ export default function MaterializationsPage() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Materializaciones', current: true }
-        ]} />
-        
         <div className="sm:flex sm:justify-between sm:items-center mb-8">
           <Title>Materializaciones</Title>
           <div className="mt-4 sm:mt-0 flex space-x-3">
@@ -466,19 +461,6 @@ export default function MaterializationsPage() {
           )}
         </Card>
       </div>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Confirmar eliminación"
-        message={`¿Está seguro que desea eliminar la materialización "${materializationToDelete?.nombre}"? Esta acción no se puede deshacer.`}
-        confirmLabel="Eliminar"
-        cancelLabel="Cancelar"
-        onConfirm={confirmDelete}
-        onCancel={() => {
-          setMaterializationToDelete(null);
-          setConfirmOpen(false);
-        }}
-      />
     </Layout>
   );
 }

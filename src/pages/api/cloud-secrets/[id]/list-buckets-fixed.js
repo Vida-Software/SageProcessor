@@ -1,5 +1,5 @@
 import { pool } from '../../../../utils/db';
-import { listBuckets } from '../../../../src/utils/cloud/adapters/minio_fixed';
+import { listBuckets } from '@/utils/cloud/adapters/minio_fixed';
 
 /**
  * API para listar buckets MinIO (versión corregida)

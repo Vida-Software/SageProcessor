@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
-import Breadcrumbs from '@/components/Breadcrumbs';
+// import Breadcrumbs from '@/components/Breadcrumbs';
 import { 
   Card, 
   Title, 
@@ -281,13 +281,6 @@ export default function DBSecretForm() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Materializaciones', href: '/admin/materializations' },
-          { label: 'Secretos de BD', href: '/admin/db-secrets' },
-          { label: isNew ? 'Nuevo Secreto' : secret.nombre, current: true }
-        ]} />
-        
         <div className="sm:flex sm:justify-between sm:items-center mb-8">
           <div>
             <Title>{isNew ? 'Nuevo Secreto de Base de Datos' : `Editar: ${secret.nombre}`}</Title>

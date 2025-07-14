@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { ResponsablesGrid } from '@/components/DataBoxes/ResponsablesGrid'
-import { NewResponsableModal } from '@/components/DataBoxes/NewResponsableModal'
-import { EditResponsableModal } from '@/components/DataBoxes/EditResponsableModal'
+//import { ResponsablesGrid } from '@/components/DataBoxes/ResponsablesGrid'
+// import { NewResponsableModal } from '@/components/DataBoxes/NewResponsableModal'
+// import { EditResponsableModal } from '@/components/DataBoxes/EditResponsableModal'
 
 export default function ResponsablesPage() {
   const [responsables, setResponsables] = useState([])
@@ -97,26 +97,6 @@ export default function ResponsablesPage() {
 
   return (
     <div>
-      <ResponsablesGrid 
-        responsables={responsables}
-        onNewClick={() => setIsNewModalOpen(true)}
-        onEditClick={handleOpenEditModal}
-        onDeleteClick={handleDeleteResponsable}
-      />
-      <NewResponsableModal
-        isOpen={isNewModalOpen}
-        onClose={() => setIsNewModalOpen(false)}
-        onSubmit={handleCreateResponsable}
-      />
-      <EditResponsableModal 
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false)
-          setCurrentResponsable(null)
-        }}
-        onSubmit={handleUpdateResponsable}
-        responsableData={currentResponsable}
-      />
     </div>
   )
 }

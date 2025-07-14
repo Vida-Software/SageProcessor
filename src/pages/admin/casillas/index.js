@@ -23,8 +23,8 @@ import {
   PlusIcon,
   DatabaseIcon
 } from '@heroicons/react/24/outline';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import Breadcrumbs from '@/components/Breadcrumbs';
+// import ConfirmDialog from '@/components/ConfirmDialog';
+// import Breadcrumbs from '@/components/Breadcrumbs';
 import { toast } from 'react-toastify';
 
 export default function CasillasPage() {
@@ -211,19 +211,6 @@ export default function CasillasPage() {
           )}
         </Card>
       </div>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Confirmar eliminación"
-        message={`¿Está seguro que desea eliminar la casilla "${casillaToDelete?.nombre}"? Esta acción no se puede deshacer.`}
-        confirmLabel="Eliminar"
-        cancelLabel="Cancelar"
-        onConfirm={confirmDelete}
-        onCancel={() => {
-          setCasillaToDelete(null);
-          setConfirmOpen(false);
-        }}
-      />
     </Layout>
   );
 }

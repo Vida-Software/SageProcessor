@@ -10,8 +10,6 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
-    depends_on:
-      - db
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgres://postgres:postgres@db:5432/sage}
       - NODE_ENV=${NODE_ENV:-production}
@@ -34,31 +32,11 @@ services:
       - sage-tmp:/app/tmp
       - ./init-scripts:/app/init-scripts
 
-  db:
-    image: postgres:14-alpine
-    container_name: sage-db
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-sage}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
-      - ./sql:/docker-entrypoint-sql
-      - ./init-scripts:/docker-entrypoint-initdb.d
-    ports:
-      - "5432:5432"
-    networks:
-      - sage-network
-
 networks:
   sage-network:
     driver: bridge
 
 volumes:
-  postgres-data:
-    driver: local
   sage-logs:
     driver: local
   sage-data:

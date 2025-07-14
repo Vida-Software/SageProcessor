@@ -25,7 +25,7 @@ import {
   ClockIcon, 
   ArrowPathIcon 
 } from '@heroicons/react/24/outline';
-import Breadcrumbs from '@/components/Breadcrumbs';
+// import Breadcrumbs from '@/components/Breadcrumbs';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
 
@@ -234,13 +234,6 @@ export default function EditMaterializationServer() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Materializaciones', href: '/admin/materializations' },
-          { label: 'Servidores', href: '/admin/materialization-servers' },
-          { label: server?.nombre || 'Editar Servidor', current: true }
-        ]} />
-        
         <div className="sm:flex sm:justify-between sm:items-center mb-8">
           <div>
             <Title>{server?.nombre || 'Editar Servidor'}</Title>

@@ -36,9 +36,9 @@ import {
   InformationCircleIcon,
   LightBulbIcon
 } from '@heroicons/react/24/outline';
-import Breadcrumbs from '@/components/Breadcrumbs';
+// import Breadcrumbs from '@/components/Breadcrumbs';
 import { toast } from 'react-toastify';
-import ConfirmDialog from '@/components/ConfirmDialog';
+// import ConfirmDialog from '@/components/ConfirmDialog';
 
 export default function CasillaMaterializationPage() {
   const router = useRouter();
@@ -340,13 +340,6 @@ export default function CasillaMaterializationPage() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Casillas', href: '/admin/casillas' },
-          { label: casilla.nombre, href: `/admin/casillas/${id}` },
-          { label: 'Materialización', current: true }
-        ]} />
-        
         <div className="sm:flex sm:justify-between sm:items-center mb-8">
           <div>
             <Title>Materialización de Datos</Title>
@@ -735,19 +728,6 @@ export default function CasillaMaterializationPage() {
           )}
         </Card>
       </div>
-      
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Confirmar eliminación"
-        message={`¿Está seguro que desea eliminar la materialización "${materializationToDelete?.nombre}"? Esta acción no se puede deshacer.`}
-        confirmLabel="Eliminar"
-        cancelLabel="Cancelar"
-        onConfirm={confirmDeleteMaterialization}
-        onCancel={() => {
-          setMaterializationToDelete(null);
-          setConfirmOpen(false);
-        }}
-      />
     </Layout>
   );
 }
