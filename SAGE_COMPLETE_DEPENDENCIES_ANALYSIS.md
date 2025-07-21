@@ -176,10 +176,16 @@ pyiceberg>=0.9.0          # Apache Iceberg support
 #### 2. UI y Componentes
 ```json
 "@headlessui/react": "^1.7.19"      // Componentes UI accesibles
-"@heroicons/react": "^2.2.0"        // Iconos
+"@heroicons/react": "^2.2.0"        // Iconos Heroicons (principal)
 "@tremor/react": "^3.18.7"          // Dashboard components
 "framer-motion": "^12.6.2"          // Animaciones
 "styled-components": "^6.1.16"      // CSS-in-JS
+```
+
+#### 2.1. Librerías de Iconos (Importante)
+```json
+"@heroicons/react": "^2.2.0"        // Iconos principales del sistema
+"lucide-react": "^0.462.0"          // Iconos adicionales (solo en yaml_editor)
 ```
 
 #### 3. Estilos
@@ -329,6 +335,65 @@ npm install next@15.2.4 react@19.1.0 react-dom@19.1.0
 npm install --save-dev @types/node@22.13.10 @types/react@19.0.10
 ```
 
+### 5. Problemas con Iconos ("Ensalada de iconos")
+**Problema**: Iconos que no se muestran correctamente, múltiples librerías de iconos, conflictos de versiones
+**Causas comunes**:
+- Mezcla de diferentes librerías de iconos
+- Importaciones incorrectas
+- Versiones incompatibles de @heroicons/react
+- Conflictos entre lucide-react y heroicons
+
+**Solución completa**:
+
+#### a) Limpiar instalación previa:
+```bash
+# Eliminar node_modules y lockfile
+rm -rf node_modules package-lock.json
+
+# Limpiar caché de npm
+npm cache clean --force
+```
+
+#### b) Instalar versiones correctas:
+```bash
+# Instalar heroicons (librería principal)
+npm install @heroicons/react@2.2.0 --save-exact
+
+# Si se usa lucide-react en yaml_editor
+cd public/yaml_editor_app/yaml_editor
+npm install lucide-react@0.462.0 --save-exact
+cd ../../../
+```
+
+#### c) Verificar importaciones correctas:
+```javascript
+// CORRECTO - Heroicons v2
+import { PlusCircleIcon } from '@heroicons/react/24/outline'
+import { CheckIcon } from '@heroicons/react/24/solid'
+
+// INCORRECTO - Heroicons v1 (obsoleto)
+import { PlusCircleIcon } from '@heroicons/react/outline'
+
+// CORRECTO - Lucide React
+import { Plus } from 'lucide-react'
+```
+
+#### d) Estructura de importación Heroicons v2:
+- `/24/outline` - Iconos con contorno (24x24)
+- `/24/solid` - Iconos sólidos (24x24)
+- `/20/solid` - Iconos sólidos pequeños (20x20)
+- `/16/solid` - Iconos micro (16x16)
+
+#### e) Evitar mezclar librerías:
+```javascript
+// MAL - Mezclar librerías
+import { PlusIcon } from '@heroicons/react/24/outline'
+import { Plus } from 'lucide-react'
+
+// BIEN - Usar una sola librería por componente
+import { PlusIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline'
+```
+
 ## Script de Instalación Completa
 
 ```bash
@@ -367,6 +432,68 @@ echo "Por favor, edita .env con tus credenciales reales"
 echo "=== Instalación completa ==="
 ```
 
+## Resolución de Problemas de Iconos
+
+### Diagnóstico de problemas con iconos
+
+1. **Verificar versiones instaladas**:
+```bash
+npm list @heroicons/react
+npm list lucide-react
+```
+
+2. **Buscar importaciones incorrectas**:
+```bash
+# Buscar importaciones v1 de heroicons (obsoletas)
+grep -r "@heroicons/react/outline" src/
+grep -r "@heroicons/react/solid" src/
+
+# Deben cambiarse a v2:
+# @heroicons/react/24/outline
+# @heroicons/react/24/solid
+```
+
+3. **Verificar conflictos de CSS**:
+```bash
+# Buscar clases CSS duplicadas
+grep -r "w-5 h-5" src/ | grep -i icon
+grep -r "w-6 h-6" src/ | grep -i icon
+```
+
+### Script de corrección automática
+
+```bash
+#!/bin/bash
+# fix-icons.sh - Script para corregir problemas de iconos
+
+echo "=== Corrigiendo problemas de iconos ==="
+
+# 1. Limpiar instalación
+rm -rf node_modules package-lock.json
+
+# 2. Instalar versiones exactas
+npm install @heroicons/react@2.2.0 --save-exact
+
+# 3. Corregir importaciones v1 a v2
+find src -type f -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | while read file; do
+    # Convertir importaciones outline
+    sed -i 's/@heroicons\/react\/outline/@heroicons\/react\/24\/outline/g' "$file"
+    # Convertir importaciones solid
+    sed -i 's/@heroicons\/react\/solid/@heroicons\/react\/24\/solid/g' "$file"
+done
+
+echo "=== Correcciones aplicadas ==="
+```
+
+### Guía de migración Heroicons v1 a v2
+
+| Heroicons v1 | Heroicons v2 |
+|--------------|--------------|
+| `@heroicons/react/outline` | `@heroicons/react/24/outline` |
+| `@heroicons/react/solid` | `@heroicons/react/24/solid` |
+| `className="w-5 h-5"` | Ya incluido por defecto |
+| `aria-hidden="true"` | Ya incluido por defecto |
+
 ## Verificación de Instalación
 
 ### Verificar Python
@@ -377,6 +504,18 @@ python3.11 -c "import pandas, numpy, psycopg2, flask; print('Python OK')"
 ### Verificar Node.js
 ```bash
 npm list next react react-dom
+```
+
+### Verificar Iconos
+```bash
+# Verificar heroicons instalado correctamente
+npm list @heroicons/react
+
+# Verificar que no hay versiones duplicadas
+npm ls @heroicons/react
+
+# Verificar archivos de iconos
+ls -la node_modules/@heroicons/react/24/
 ```
 
 ### Verificar PostgreSQL
