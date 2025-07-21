@@ -1,5 +1,7 @@
 {pkgs}: {
   deps = [
+    pkgs.netcat
+    pkgs.openssh
     pkgs.duckdb
     pkgs.awscli
     pkgs.cacert
