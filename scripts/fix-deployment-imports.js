@@ -11,7 +11,7 @@ const glob = require('glob');
 console.log('🔧 Corrigiendo imports para despliegue...\n');
 
 // Encontrar todos los archivos JS/TS en src/pages/api
-const apiFiles = glob.sync('src/pages/api/**/*.{js,ts,jsx,tsx}');
+const apiFiles = glob.sync('src/pages/**/*.{js,ts,jsx,tsx}');
 
 let filesFixed = 0;
 
@@ -19,10 +19,15 @@ apiFiles.forEach(filePath => {
   try {
     let content = fs.readFileSync(filePath, 'utf8');
     const originalContent = content;
+    const iconMappings = {
+      'DatabaseIcon': 'CircleStackIcon',
+      'SaveIcon': 'ArrowDownTrayIcon',
+      // Agregar otros mappings si aparecen más errores
+    };
     
-    // Calcular la ruta relativa desde el archivo actual hasta src/lib/db
+    /*// Calcular la ruta relativa desde el archivo actual hasta @/utils/db/db
     const fileDir = path.dirname(filePath);
-    const relativePath = path.relative(fileDir, 'src/lib/db.js');
+    const relativePath = path.relative(fileDir, '@/utils/db/db.js');
     const normalizedPath = relativePath.replace(/\\/g, '/');
     
     // Reemplazar import de @/lib/db con ruta relativa
@@ -34,8 +39,15 @@ apiFiles.forEach(filePath => {
     content = content.replace(
       /import\s+(['"]@\/lib\/db['"])/g,
       `import '${normalizedPath.startsWith('.') ? normalizedPath : './' + normalizedPath}'`
-    );
+    );*/
     
+    Object.entries(iconMappings).forEach(([oldIcon, newIcon]) => {
+      content = content.replace(
+        new RegExp(oldIcon, 'g'), 
+        newIcon
+      );
+    });
+
     // Solo escribir si hubo cambios
     if (content !== originalContent) {
       fs.writeFileSync(filePath, content);

@@ -25,7 +25,7 @@ import {
   PencilIcon,
   TrashIcon,
   PlusIcon,
-  DatabaseIcon,
+  CircleStackIcon,
   CloudIcon,
   DocumentTextIcon,
   ServerIcon,
@@ -204,7 +204,7 @@ export default function MaterializationsPage() {
   const getTypeIcon = (type) => {
     switch (type) {
       case 'database':
-        return <DatabaseIcon className="h-5 w-5 text-blue-500" />;
+        return <CircleStackIcon className="h-5 w-5 text-blue-500" />;
       case 'cloud_datalake':
         return <CloudIcon className="h-5 w-5 text-purple-500" />;
       case 'local':
@@ -237,7 +237,7 @@ export default function MaterializationsPage() {
             </Button>
             <Button 
               variant="secondary" 
-              icon={DatabaseIcon}
+              icon={CircleStackIcon}
               onClick={() => router.push('/admin/database-connections')}
             >
               Conexiones BD
@@ -249,7 +249,7 @@ export default function MaterializationsPage() {
           <Col>
             <Card decoration="top" decorationColor="blue">
               <Flex justifyContent="start" className="space-x-4">
-                <DatabaseIcon className="w-8 h-8 text-blue-500" />
+                <CircleStackIcon className="w-8 h-8 text-blue-500" />
                 <div>
                   <Text>Total</Text>
                   <Metric>{stats.total}</Metric>

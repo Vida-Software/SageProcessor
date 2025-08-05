@@ -14,7 +14,7 @@ Este error ocurre cuando Next.js no puede resolver los alias de rutas configurad
 2. **Verificar archivos críticos**:
    ```bash
    ls -la jsconfig.json tsconfig.json next.config.js
-   ls -la src/lib/db.js
+   ls -la @/utils/db/db.js
    ```
 
 ### Soluciones por Orden de Prioridad
@@ -108,7 +108,7 @@ Después de aplicar cualquier solución:
    ```bash
    node -e "
    try {
-     require('./src/lib/db.js');
+     require('./@/utils/db/db.js');
      console.log('✅ db.js se puede importar correctamente');
    } catch(e) {
      console.log('❌ Error:', e.message);

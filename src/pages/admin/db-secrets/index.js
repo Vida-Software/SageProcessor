@@ -263,7 +263,7 @@ export default function DatabaseSecrets() {
   };
 
   // Obtener icono de tipo de base de datos
-  const getDatabaseIcon = (type) => {
+  const getCircleStackIcon = (type) => {
     // Solo usamos un único icono por ahora
     return <PlusCircleIcon className="h-5 w-5 text-indigo-500" />;
   };
@@ -658,7 +658,7 @@ export default function DatabaseSecrets() {
               <Card key={secret.id} className="relative">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center">
-                    {getDatabaseIcon(secret.tipo)}
+                    {getCircleStackIcon(secret.tipo)}
                     <div className="ml-2">
                       <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                         {secret.nombre}

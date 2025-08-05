@@ -15,7 +15,7 @@ const requiredFiles = [
   'tsconfig.json', 
   'next.config.js',
   'package.json',
-  'src/lib/db.js'
+  '@/utils/db/db.js'
 ];
 
 let allFilesExist = true;
@@ -47,18 +47,18 @@ if (fs.existsSync('jsconfig.json')) {
   }
 }
 
-// Verificar que src/lib/db.js existe y tiene exports
-if (fs.existsSync('src/lib/db.js')) {
+// Verificar que @/utils/db/db.js existe y tiene exports
+if (fs.existsSync('@/utils/db/db.js')) {
   try {
-    const dbContent = fs.readFileSync('src/lib/db.js', 'utf8');
+    const dbContent = fs.readFileSync('@/utils/db/db.js', 'utf8');
     if (dbContent.includes('export')) {
-      console.log('✅ src/lib/db.js tiene exports');
+      console.log('✅ @/utils/db/db.js tiene exports');
     } else {
-      console.log('❌ src/lib/db.js NO tiene exports');
+      console.log('❌ @/utils/db/db.js NO tiene exports');
       allFilesExist = false;
     }
   } catch (e) {
-    console.log('❌ Error al leer src/lib/db.js:', e.message);
+    console.log('❌ Error al leer @/utils/db/db.js:', e.message);
     allFilesExist = false;
   }
 }
