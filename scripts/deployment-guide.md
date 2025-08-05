@@ -64,9 +64,18 @@ npm install
 npm run build
 ```
 
-#### Solución 4: Conversión a rutas relativas (Última opción)
+#### Solución 4: Script de corrección completa (Recomendado)
 ```bash
-# Ejecutar script de corrección automática
+# Ejecutar script de corrección completa para todos los errores
+node scripts/fix-deployment-errors-complete.js
+
+# Probar build
+npm run build
+```
+
+#### Solución 5: Conversión a rutas relativas (Última opción)
+```bash
+# Ejecutar script de corrección básica
 node scripts/fix-deployment-imports.js
 
 # Probar build

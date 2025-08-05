@@ -12,9 +12,13 @@ console.log('🔧 Corrigiendo imports para despliegue...\n');
 
 // Encontrar todos los archivos JS/TS en src/pages/api
 const apiFiles = glob.sync('src/pages/api/**/*.{js,ts,jsx,tsx}');
+// Encontrar archivos de páginas admin
+const adminFiles = glob.sync('src/pages/admin/**/*.{js,ts,jsx,tsx}');
 
 let filesFixed = 0;
 
+// 1. Corregir imports de base de datos en archivos API
+console.log('📁 Corrigiendo imports de base de datos...');
 apiFiles.forEach(filePath => {
   try {
     let content = fs.readFileSync(filePath, 'utf8');
@@ -41,6 +45,69 @@ apiFiles.forEach(filePath => {
       fs.writeFileSync(filePath, content);
       console.log(`✅ Corregido: ${filePath}`);
       console.log(`   @/lib/db → ${normalizedPath.startsWith('.') ? normalizedPath : './' + normalizedPath}`);
+      filesFixed++;
+    }
+  } catch (error) {
+    console.log(`❌ Error procesando ${filePath}:`, error.message);
+  }
+});
+
+// 2. Corregir imports de Breadcrumbs en archivos admin
+console.log('\n🍞 Corrigiendo imports de Breadcrumbs...');
+const allFiles = [...apiFiles, ...adminFiles];
+
+allFiles.forEach(filePath => {
+  try {
+    let content = fs.readFileSync(filePath, 'utf8');
+    const originalContent = content;
+    
+    // Corregir import de Breadcrumbs
+    content = content.replace(
+      /import\s+Breadcrumbs\s+from\s+['"]@\/components\/Breadcrumbs['"];?/g,
+      "import BreadcrumbNav from '@/components/nav/BreadcrumbNav';"
+    );
+    
+    // Corregir uso del componente
+    content = content.replace(
+      /<Breadcrumbs/g,
+      '<BreadcrumbNav'
+    );
+    
+    content = content.replace(
+      /<\/Breadcrumbs>/g,
+      '</BreadcrumbNav>'
+    );
+    
+    // Agregar función query a utils/db si es necesario
+    if (content.includes('import { query }') && filePath.includes('src/pages/api/')) {
+      content = content.replace(
+        /import\s*{\s*query\s*}\s*from\s*['"]@\/utils\/db['"];?/g,
+        "import { pool } from '@/utils/db';"
+      );
+      
+      // Cambiar await query( por await pool.query(
+      content = content.replace(
+        /await\s+query\s*\(/g,
+        'await pool.query('
+      );
+      
+      // Cambiar = query( por = pool.query(
+      content = content.replace(
+        /=\s*query\s*\(/g,
+        '= pool.query('
+      );
+      
+      // Agregar .rows donde sea necesario (más común en PostgreSQL)
+      content = content.replace(
+        /(const\s+\w+\s*=\s*await\s+pool\.query\([^)]+\);)/g,
+        '$1\n        const result = $1.rows || $1;'
+      );
+    }
+    
+    // Solo escribir si hubo cambios
+    if (content !== originalContent) {
+      fs.writeFileSync(filePath, content);
+      console.log(`✅ Corregido: ${filePath}`);
       filesFixed++;
     }
   } catch (error) {
