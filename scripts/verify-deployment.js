@@ -15,7 +15,8 @@ const requiredFiles = [
   'tsconfig.json', 
   'next.config.js',
   'package.json',
-  '@/utils/db/db.js'
+  'src/lib/db.js',
+  'src/utils/db.js'
 ];
 
 let allFilesExist = true;
@@ -90,7 +91,10 @@ if (allFilesExist) {
 } else {
   console.log('\n❌ Faltan archivos o configuraciones');
   console.log('\nAcciones requeridas:');
-  console.log('1. Verificar que todos los archivos fueron copiados');
-  console.log('2. Verificar permisos de archivos');
-  console.log('3. Ejecutar npm install --force si es necesario');
+  console.log('1. PROBLEMA COMÚN: src/lib/ falta por .gitignore');
+  console.log('   - Verificar que src/lib/db.js existe en el repo');
+  console.log('   - Si no existe, actualizar .gitignore y hacer push');
+  console.log('2. Verificar que todos los archivos fueron copiados');
+  console.log('3. Verificar permisos de archivos');
+  console.log('4. Ejecutar npm install --force si es necesario');
 }
