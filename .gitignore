@@ -32,15 +32,17 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
-build/
+/env/
+/build/
 develop-eggs/
-dist/
+/dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Python lib directories (but not src/lib)
+/lib/
+/lib64/
+/.pythonlibs/lib/
 parts/
 sdist/
 var/
@@ -73,11 +75,12 @@ out/
 .turbo
 .swc/
 public/uploads/
-tmp/
-*.zip
-*.gz
-*.log
-*.tar
+/tmp/
+# Exclude specific project files but allow archives in project assets
+sage_*.zip
+output_*.gz
+daemon*.log
+backup*.tar
 executions/*
 /executions/
 logs/*
@@ -104,9 +107,9 @@ Desktop.ini
 $RECYCLE.BIN/
 *.lnk
 
-# Archivos generados por entornos de desarrollo
+# Archivos generados por entornos de desarrollo (exclude Replit-specific)
 .cache/
-.config/
+/.config/
 .local/
 .pythonlibs/
 .upm/
