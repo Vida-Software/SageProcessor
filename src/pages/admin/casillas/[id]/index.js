@@ -27,9 +27,9 @@ import {
   DocumentTextIcon,
   PencilIcon,
   TrashIcon,
-  SaveIcon,
-  DatabaseIcon
 } from '@heroicons/react/24/outline';
+
+import { CircleStackIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
 // import Breadcrumbs from '@/components/Breadcrumbs';
 import { toast } from 'react-toastify';
 
@@ -183,7 +183,7 @@ export default function CasillaDetailsPage() {
             )}
             {!isNew && (
               <Button
-                icon={DatabaseIcon}
+                icon={CircleStackIcon}
                 variant="secondary"
                 onClick={() => router.push(`/admin/casillas/${id}/materialization`)}
               >
@@ -352,7 +352,7 @@ export default function CasillaDetailsPage() {
             variant="primary"
             disabled={saving}
             onClick={saveCasilla}
-            icon={SaveIcon}
+            icon={ArrowDownTrayIcon}
             loading={saving}
           >
             {isNew ? 'Crear Casilla' : 'Guardar Cambios'}

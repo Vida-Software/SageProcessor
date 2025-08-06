@@ -21,7 +21,7 @@ import {
   TrashIcon,
   DocumentTextIcon,
   PlusIcon,
-  DatabaseIcon
+  CircleStackIcon
 } from '@heroicons/react/24/outline';
 // import ConfirmDialog from '@/components/ConfirmDialog';
 // import Breadcrumbs from '@/components/Breadcrumbs';
@@ -187,7 +187,7 @@ export default function CasillasPage() {
                             size="xs"
                             variant="light"
                             color="purple"
-                            icon={DatabaseIcon}
+                            icon={CircleStackIcon}
                             onClick={() => router.push(`/admin/casillas/${casilla.id}/materialization`)}
                           >
                             Materialización

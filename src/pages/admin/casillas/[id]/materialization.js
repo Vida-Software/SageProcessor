@@ -26,7 +26,7 @@ import {
 } from '@tremor/react';
 import {
   ArrowLeftIcon,
-  DatabaseIcon,
+  CircleStackIcon,
   CloudArrowUpIcon,
   DocumentTextIcon,
   PlusIcon,
@@ -456,7 +456,7 @@ export default function CasillaMaterializationPage() {
                   onValueChange={(value) => handleNewMaterializationChange('tipo_materializacion', value)}
                   required
                 >
-                  <SelectItem value="database" icon={DatabaseIcon}>Base de Datos</SelectItem>
+                  <SelectItem value="database" icon={CircleStackIcon}>Base de Datos</SelectItem>
                   <SelectItem value="cloud_datalake" icon={CloudArrowUpIcon}>Data Lake Cloud</SelectItem>
                   <SelectItem value="local" icon={DocumentTextIcon}>Archivo Local</SelectItem>
                 </Select>
@@ -646,7 +646,7 @@ export default function CasillaMaterializationPage() {
                       </TableCell>
                       <TableCell>
                         {materializacion.tipo_materializacion === 'database' && (
-                          <Badge icon={DatabaseIcon} color="blue">Base de Datos</Badge>
+                          <Badge icon={CircleStackIcon} color="blue">Base de Datos</Badge>
                         )}
                         {materializacion.tipo_materializacion === 'cloud_datalake' && (
                           <Badge icon={CloudArrowUpIcon} color="purple">Data Lake</Badge>

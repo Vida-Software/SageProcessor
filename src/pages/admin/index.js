@@ -16,7 +16,7 @@ import {
   ServerIcon,
   CogIcon,
   InboxIcon,
-  DatabaseIcon,
+  CircleStackIcon,
   CloudArrowUpIcon,
   KeyIcon,
   ArrowPathIcon
@@ -63,7 +63,7 @@ export default function AdminPage() {
       title: 'Materializaciones',
       description: 'Gestionar materializaciones',
       href: '/admin/materializations',
-      icon: DatabaseIcon,
+      icon: CircleStackIcon,
       color: 'rose'
     },
     {
