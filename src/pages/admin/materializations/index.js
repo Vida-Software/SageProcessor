@@ -25,7 +25,7 @@ import {
   PencilIcon,
   TrashIcon,
   PlusIcon,
-  DatabaseIcon,
+  CircleStackIcon,
   CloudIcon,
   DocumentTextIcon,
   ServerIcon,
@@ -33,7 +33,7 @@ import {
   AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import Breadcrumbs from '@/components/Breadcrumbs';
+import BreadcrumbNav from '@/components/nav/BreadcrumbNav';
 import { toast } from 'react-toastify';
 
 export default function MaterializationsPage() {
@@ -204,7 +204,7 @@ export default function MaterializationsPage() {
   const getTypeIcon = (type) => {
     switch (type) {
       case 'database':
-        return <DatabaseIcon className="h-5 w-5 text-blue-500" />;
+        return <CircleStackIcon className="h-5 w-5 text-blue-500" />;
       case 'cloud_datalake':
         return <CloudIcon className="h-5 w-5 text-purple-500" />;
       case 'local':
@@ -225,7 +225,7 @@ export default function MaterializationsPage() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
+        <BreadcrumbNav items={[
           { label: 'Admin', href: '/admin' },
           { label: 'Materializaciones', current: true }
         ]} />
@@ -242,7 +242,7 @@ export default function MaterializationsPage() {
             </Button>
             <Button 
               variant="secondary" 
-              icon={DatabaseIcon}
+              icon={CircleStackIcon}
               onClick={() => router.push('/admin/database-connections')}
             >
               Conexiones BD
@@ -254,7 +254,7 @@ export default function MaterializationsPage() {
           <Col>
             <Card decoration="top" decorationColor="blue">
               <Flex justifyContent="start" className="space-x-4">
-                <DatabaseIcon className="w-8 h-8 text-blue-500" />
+                <CircleStackIcon className="w-8 h-8 text-blue-500" />
                 <div>
                   <Text>Total</Text>
                   <Metric>{stats.total}</Metric>

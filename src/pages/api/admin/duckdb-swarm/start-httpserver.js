@@ -1,5 +1,3 @@
-import { pool } from '@/utils/db';
-
 async function getServer(serverId) {
   try {
     // Intentar obtener el servidor de la base de datos PostgreSQL con información SSH

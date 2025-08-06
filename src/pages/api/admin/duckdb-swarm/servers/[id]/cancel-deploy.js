@@ -1,5 +1,3 @@
-import { pool } from '@/utils/db';
-
 export default async function handler(req, res) {
   // Solo permitir solicitudes POST
   if (req.method !== 'POST') {

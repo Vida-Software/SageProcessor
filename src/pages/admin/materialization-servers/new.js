@@ -16,7 +16,7 @@ import {
   Switch
 } from '@tremor/react';
 import { ArrowLeftIcon, ServerIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
-import Breadcrumbs from '@/components/Breadcrumbs';
+import BreadcrumbNav from '@/components/nav/BreadcrumbNav';
 import { toast } from 'react-toastify';
 
 export default function NewMaterializationServer() {
@@ -125,7 +125,7 @@ export default function NewMaterializationServer() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
+        <BreadcrumbNav items={[
           { label: 'Admin', href: '/admin' },
           { label: 'Materializaciones', href: '/admin/materializations' },
           { label: 'Servidores', href: '/admin/materialization-servers' },

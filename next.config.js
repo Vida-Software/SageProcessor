@@ -13,11 +13,13 @@ const nextConfig = {
   },
   transpilePackages: ['@tremor/react', 'react-day-picker'],
   // Configuración para permitir archivos grandes (aumentar a 100MB)
-  api: {
-    bodyParser: {
-      sizeLimit: '100mb',
+  pages: {
+    api: {
+      bodyParser: {
+        sizeLimit: '100mb',
+      },
+      responseLimit: '100mb',
     },
-    responseLimit: '100mb',
   },
   
   // Configuración para manejar paquetes ESM

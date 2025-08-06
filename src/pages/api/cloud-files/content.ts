@@ -10,6 +10,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+// Función helper para queries
+const query = async (text, params) => {
+  const result = await pool.query(text, params);
+  return result.rows;
+};
+
 /**
  * API para obtener el contenido de un archivo en la nube
  * 

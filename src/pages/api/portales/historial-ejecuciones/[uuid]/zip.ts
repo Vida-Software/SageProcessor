@@ -15,6 +15,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+// Función helper para queries
+const query = async (text, params) => {
+  const result = await pool.query(text, params);
+  return result.rows;
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Configurar encabezados para descargas binarias
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

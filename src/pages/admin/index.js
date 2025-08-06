@@ -16,12 +16,12 @@ import {
   ServerIcon,
   CogIcon,
   InboxIcon,
-  DatabaseIcon,
+  CircleStackIcon,
   CloudArrowUpIcon,
   KeyIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import Breadcrumbs from '@/components/Breadcrumbs';
+import BreadcrumbNav from '@/components/nav/BreadcrumbNav';
 
 export default function AdminPage() {
   const adminModules = [
@@ -64,7 +64,7 @@ export default function AdminPage() {
       title: 'Materializaciones',
       description: 'Gestionar materializaciones',
       href: '/admin/materializations',
-      icon: DatabaseIcon,
+      icon: CircleStackIcon,
       color: 'rose'
     },
     {
@@ -100,7 +100,7 @@ export default function AdminPage() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
+        <BreadcrumbNav items={[
           { label: 'Admin', current: true }
         ]} />
         

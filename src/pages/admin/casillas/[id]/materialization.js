@@ -26,7 +26,7 @@ import {
 } from '@tremor/react';
 import {
   ArrowLeftIcon,
-  DatabaseIcon,
+  CircleStackIcon,
   CloudArrowUpIcon,
   DocumentTextIcon,
   PlusIcon,
@@ -36,7 +36,7 @@ import {
   InformationCircleIcon,
   LightBulbIcon
 } from '@heroicons/react/24/outline';
-import Breadcrumbs from '@/components/Breadcrumbs';
+import BreadcrumbNav from '@/components/nav/BreadcrumbNav';
 import { toast } from 'react-toastify';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
@@ -340,7 +340,7 @@ export default function CasillaMaterializationPage() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
+        <BreadcrumbNav items={[
           { label: 'Admin', href: '/admin' },
           { label: 'Casillas', href: '/admin/casillas' },
           { label: casilla.nombre, href: `/admin/casillas/${id}` },
@@ -463,7 +463,7 @@ export default function CasillaMaterializationPage() {
                   onValueChange={(value) => handleNewMaterializationChange('tipo_materializacion', value)}
                   required
                 >
-                  <SelectItem value="database" icon={DatabaseIcon}>Base de Datos</SelectItem>
+                  <SelectItem value="database" icon={CircleStackIcon}>Base de Datos</SelectItem>
                   <SelectItem value="cloud_datalake" icon={CloudArrowUpIcon}>Data Lake Cloud</SelectItem>
                   <SelectItem value="local" icon={DocumentTextIcon}>Archivo Local</SelectItem>
                 </Select>
@@ -653,7 +653,7 @@ export default function CasillaMaterializationPage() {
                       </TableCell>
                       <TableCell>
                         {materializacion.tipo_materializacion === 'database' && (
-                          <Badge icon={DatabaseIcon} color="blue">Base de Datos</Badge>
+                          <Badge icon={CircleStackIcon} color="blue">Base de Datos</Badge>
                         )}
                         {materializacion.tipo_materializacion === 'cloud_datalake' && (
                           <Badge icon={CloudArrowUpIcon} color="purple">Data Lake</Badge>

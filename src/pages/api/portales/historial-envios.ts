@@ -5,6 +5,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+// Función helper para queries
+const query = async (text, params) => {
+  const result = await pool.query(text, params);
+  return result.rows;
+};
+
 /**
  * Endpoint para obtener el historial de envíos y el estado de retraso
  * basado en la frecuencia configurada para cada responsable

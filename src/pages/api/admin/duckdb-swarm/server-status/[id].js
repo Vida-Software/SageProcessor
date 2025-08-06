@@ -1,5 +1,3 @@
-import { pool } from '@/utils/db';
-
 export default async function handler(req, res) {
   const { method } = req;
   const { id } = req.query;

@@ -16,6 +16,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+// Función helper para queries
+const query = async (text, params) => {
+  const result = await pool.query(text, params);
+  return result.rows;
+};
+
 /**
  * Obtiene información del formato de archivo basado en la configuración YAML
  * @param yamlContent Contenido YAML analizado

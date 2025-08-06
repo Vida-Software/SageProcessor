@@ -15,6 +15,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
 
+// Función helper para queries
+const query = async (text, params) => {
+  const result = await pool.query(text, params);
+  return result.rows;
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Sólo permitir solicitudes GET
   if (req.method !== 'GET') {

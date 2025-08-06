@@ -1,5 +1,6 @@
 import { Pool, Client } from 'pg';
 
+import { Pool } from 'pg';
 // Pool de conexión para BD local
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

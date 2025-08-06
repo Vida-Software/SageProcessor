@@ -1,10 +1,15 @@
-import { query } from '@/lib/db';
 import { Pool } from 'pg';
 
 // Obtener la conexión a la base de datos
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+// Función helper para queries
+const query = async (text, params) => {
+  const result = await pool.query(text, params);
+  return result.rows;
+};
 
 export default async function handler(req, res) {
   // En este proyecto no se está usando next-auth, sino autenticación basada en cookies/sesión

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
-import Breadcrumbs from '@/components/Breadcrumbs';
+import BreadcrumbNav from '@/components/nav/BreadcrumbNav';
 import { 
   Card, 
   Title, 
@@ -281,7 +281,7 @@ export default function DBSecretForm() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
+        <BreadcrumbNav items={[
           { label: 'Admin', href: '/admin' },
           { label: 'Materializaciones', href: '/admin/materializations' },
           { label: 'Secretos de BD', href: '/admin/db-secrets' },

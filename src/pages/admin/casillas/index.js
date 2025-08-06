@@ -21,10 +21,10 @@ import {
   TrashIcon,
   DocumentTextIcon,
   PlusIcon,
-  DatabaseIcon
+  CircleStackIcon
 } from '@heroicons/react/24/outline';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import Breadcrumbs from '@/components/Breadcrumbs';
+import BreadcrumbNav from '@/components/nav/BreadcrumbNav';
 import { toast } from 'react-toastify';
 
 export default function CasillasPage() {
@@ -100,7 +100,7 @@ export default function CasillasPage() {
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <Breadcrumbs items={[
+        <BreadcrumbNav items={[
           { label: 'Admin', href: '/admin' },
           { label: 'Casillas', current: true }
         ]} />
@@ -187,7 +187,7 @@ export default function CasillasPage() {
                             size="xs"
                             variant="light"
                             color="purple"
-                            icon={DatabaseIcon}
+                            icon={CircleStackIcon}
                             onClick={() => router.push(`/admin/casillas/${casilla.id}/materialization`)}
                           >
                             Materialización
