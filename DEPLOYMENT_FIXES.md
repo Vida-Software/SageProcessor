@@ -282,6 +282,11 @@ Este script resuelve:
 
 ### Error de Build: "Cannot destructure property 'auth' of 'e' as it is undefined"
 
+**❗ PROBLEMA CRÍTICO IDENTIFICADO:**
+- `getServerSession` usado en `casillas_fix.js` sin importar  
+- Importación comentada pero función en uso (línea 25)
+- Causa error de destructuring durante SSR en página `/admin`
+
 Este error ocurre durante el build de Next.js y impide completar el despliegue:
 
 ```
@@ -312,10 +317,13 @@ node scripts/fix-auth-options-error.js
 # 5. Corrección error crítico de pre-renderizado
 node scripts/fix-prerender-error.js
 
-# 6. Instalar dependencias
+# 6. Corrección específica del error de getServerSession
+node scripts/fix-critical-prerender-error.js
+
+# 7. Instalar dependencias
 npm install
 
-# 7. Verificar build
+# 8. Verificar build
 npm run build
 ```
 
