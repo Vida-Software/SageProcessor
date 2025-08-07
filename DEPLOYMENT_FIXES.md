@@ -278,6 +278,20 @@ Este script resuelve:
 - `src/pages/api/auth/[...nextauth].js` - Configuración NextAuth
 - `src/lib/yaml-parser.js` - Copia del parser YAML en src/lib/
 
+## 🚨 Error Crítico de Pre-renderizado
+
+### Error de Build: "Cannot destructure property 'auth' of 'e' as it is undefined"
+
+Este error ocurre durante el build de Next.js y impide completar el despliegue:
+
+```
+TypeError: Cannot destructure property 'auth' of 'e' as it is undefined.
+Error occurred prerendering page "/admin". Read more: https://nextjs.org/docs/messages/prerender-error
+Export encountered an error on /admin, exiting the build.
+```
+
+**Causa**: Código API intentando destructurar propiedades undefined durante Server-Side Rendering (SSR).
+
 ### Secuencia Completa de Corrección
 
 Para un despliegue exitoso, ejecuta todos los scripts en orden:
@@ -295,10 +309,13 @@ node scripts/fix-nextauth-minio-errors.js
 # 4. Corrección authOptions
 node scripts/fix-auth-options-error.js
 
-# 5. Instalar dependencias
+# 5. Corrección error crítico de pre-renderizado
+node scripts/fix-prerender-error.js
+
+# 6. Instalar dependencias
 npm install
 
-# 6. Verificar build
+# 7. Verificar build
 npm run build
 ```
 

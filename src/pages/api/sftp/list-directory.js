@@ -14,7 +14,18 @@ export default async function handler(req, res) {
   }
   
   try {
-    const { host, port, username, auth, path: sftpPath } = req.body;
+    // Verificar que req.body existe para evitar errores de destructuring
+    if (!req.body) {
+      return res.status(400).json({ error: 'Request body is required' });
+    }
+
+    const { 
+      host, 
+      port = 22, 
+      username, 
+      auth = {}, 
+      path: sftpPath = '~' 
+    } = req.body;
     
     // Validaciones básicas
     if (!host) {
@@ -47,10 +58,10 @@ export default async function handler(req, res) {
     ];
     
     // Agregar autenticación (contraseña o clave SSH)
-    if (auth.password) {
+    if (auth && auth.password) {
       args.push(auth.password);
       args.push(''); // Clave SSH vacía
-    } else if (auth.privateKey) {
+    } else if (auth && auth.privateKey) {
       args.push(''); // Contraseña vacía
       args.push(auth.privateKey);
     } else {
