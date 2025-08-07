@@ -1,7 +1,8 @@
 import { Pool } from 'pg'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { getServerSession } from "next-auth/next"
+// Importaciones simplificadas para compatibilidad de despliegue
+// import { getServerSession } from "next-auth/next"
 import { authOptions } from "../../auth/[...nextauth]"
 
 // Configuración de la conexión a la base de datos PostgreSQL

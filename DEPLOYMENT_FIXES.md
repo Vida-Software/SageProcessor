@@ -280,19 +280,25 @@ Este script resuelve:
 
 ### Secuencia Completa de Corrección
 
-Para un despliegue exitoso, ejecuta en orden:
+Para un despliegue exitoso, ejecuta todos los scripts en orden:
 
 ```bash
 # 1. Correcciones principales
 node scripts/fix-compilation-errors.js
 
-# 2. Correcciones adicionales
+# 2. Correcciones adicionales  
 node scripts/fix-latest-compilation-errors.js
 
-# 3. Instalar dependencias
+# 3. Correcciones NextAuth y MinIO
+node scripts/fix-nextauth-minio-errors.js
+
+# 4. Corrección authOptions
+node scripts/fix-auth-options-error.js
+
+# 5. Instalar dependencias
 npm install
 
-# 4. Verificar build
+# 6. Verificar build
 npm run build
 ```
 
