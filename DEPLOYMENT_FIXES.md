@@ -232,6 +232,70 @@ Si persisten errores después de aplicar estas correcciones:
 3. Limpiar cache: `npm run clean` o eliminar `.next/` y `node_modules/`
 4. Reinstalar dependencias: `rm -rf node_modules && npm install`
 
+## 🆕 Errores Adicionales Recientes (Actualización)
+
+### Nuevos Errores Identificados
+
+Si después de aplicar las correcciones anteriores aún encuentras estos errores:
+
+#### Error: Can't resolve yaml-parser
+```
+./src/pages/api/data-boxes/[id]/update.ts
+Module not found: Can't resolve '../../../../lib/yaml-parser'
+```
+
+#### Error: Can't resolve ConfirmDialog
+```
+./src/pages/admin/casillas/[id]/materialization.js
+Module not found: Can't resolve '@/components/ConfirmDialog'
+```
+
+#### Error: Can't resolve next-auth
+```
+./src/pages/api/portales/[uuid]/casillas_fix.js
+Module not found: Can't resolve 'next-auth/next'
+Module not found: Can't resolve '../../auth/[...nextauth]'
+```
+
+### Script de Corrección Actualizado
+
+Ejecuta el nuevo script de corrección para estos errores:
+
+```bash
+node scripts/fix-latest-compilation-errors.js
+```
+
+Este script resuelve:
+
+1. **Ruta yaml-parser**: Crea `src/lib/yaml-parser.js` para compatibilidad de rutas
+2. **ConfirmDialog**: Crea componente completo de diálogo de confirmación
+3. **NextAuth**: Crea configuración básica de autenticación
+4. **Dependencia yaml**: Agrega `yaml: "^2.3.4"` al package.json
+
+### Archivos Creados Automáticamente
+
+- `src/components/ConfirmDialog.js` - Componente de diálogo modal
+- `src/pages/api/auth/[...nextauth].js` - Configuración NextAuth
+- `src/lib/yaml-parser.js` - Copia del parser YAML en src/lib/
+
+### Secuencia Completa de Corrección
+
+Para un despliegue exitoso, ejecuta en orden:
+
+```bash
+# 1. Correcciones principales
+node scripts/fix-compilation-errors.js
+
+# 2. Correcciones adicionales
+node scripts/fix-latest-compilation-errors.js
+
+# 3. Instalar dependencias
+npm install
+
+# 4. Verificar build
+npm run build
+```
+
 ---
 
 **Última actualización**: Agosto 2025  
