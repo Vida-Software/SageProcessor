@@ -1,5 +1,5 @@
 import { pool } from '../../../../lib/db';
-import { createBucket } from '../../../../src/utils/cloud/adapters/minio';
+import { createBucket } from '../../../../utils/cloud/adapters/minio';
 
 /**
  * API para crear el bucket "rawmondelezperustrategiotradicional" en MinIO

@@ -55,7 +55,8 @@
     "mysql2": "^3.11.3",
     "tedious": "^18.0.0",
     "sqlite3": "^5.1.7",
-    "better-sqlite3": "^11.7.0"
+    "better-sqlite3": "^11.7.0",
+    "next-auth": "^4.24.15"
   },
   "devDependencies": {
     "@types/node": "22.13.10",
