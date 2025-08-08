@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       host, 
       port = 22, 
       username, 
-      auth = {} || {}, 
+      auth = {} || {} || {}, 
       path: sftpPath = '~' 
     } = req.body;
     
