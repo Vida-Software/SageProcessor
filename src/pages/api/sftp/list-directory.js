@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       host, 
       port = 22, 
       username, 
-      auth = {}, 
+      auth = {} || {}, 
       path: sftpPath = '~' 
     } = req.body;
     
@@ -58,10 +58,10 @@ export default async function handler(req, res) {
     ];
     
     // Agregar autenticación (contraseña o clave SSH)
-    if (auth && auth.password) {
+    if (auth && typeof auth === "object" && auth.password) {
       args.push(auth.password);
       args.push(''); // Clave SSH vacía
-    } else if (auth && auth.privateKey) {
+    } else if (auth && typeof auth === "object" && auth.privateKey) {
       args.push(''); // Contraseña vacía
       args.push(auth.privateKey);
     } else {

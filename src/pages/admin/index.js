@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
+const DynamicTremor = dynamic(() => import('@tremor/react').then(mod => ({ default: mod })), { ssr: false });
 import {
   Card,
   Title,
@@ -22,6 +24,9 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import BreadcrumbNav from '@/components/nav/BreadcrumbNav';
+
+// Configuración para evitar errores de pre-renderizado
+AdminPage.getInitialProps = () => ({});
 
 export default function AdminPage() {
   const adminModules = [
@@ -96,6 +101,11 @@ export default function AdminPage() {
       color: 'teal'
     }
   ];
+
+  // Verificar que estamos en el cliente antes de renderizar
+  if (typeof window === 'undefined') {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Layout>

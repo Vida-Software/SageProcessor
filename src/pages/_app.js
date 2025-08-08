@@ -13,6 +13,9 @@ export default function App({ Component, pageProps }) {
 
   // Efecto para gestionar el tema
   useEffect(() => {
+    // Verificar que estamos en el cliente antes de manipular el DOM
+    if (typeof window === 'undefined') return;
+    
     // Para portal-externo, siempre tema claro sin importar la preferencia
     if (router.pathname.startsWith("/portal-externo")) {
       document.documentElement.classList.remove("dark");
